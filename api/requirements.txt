@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+argon2-cffi
+pyotp
+qrcode[pil]
+python-multipart
+cryptography
+python-dotenv

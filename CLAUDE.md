@@ -7,7 +7,7 @@
 
 ```
 web/    Next.js 15 (App Router) + MUI v7 + TipTap + Yjs
-api/    FastAPI + SQLite   ← تا فاز ۴ خالی می‌ماند، دست نزن
+api/    FastAPI + SQLite (venv با uv، جزئیات در api/README.md)
 ```
 
 ## روش کار
@@ -17,6 +17,7 @@ api/    FastAPI + SQLite   ← تا فاز ۴ خالی می‌ماند، دست 
 - اگر چیزی در `PLAN.md` مبهم بود، بپرس. حدس نزن.
 - **کد اضافه ننویس.** قابلیتی که در فاز جاری نیست، ساخته نمی‌شود.
 - بستهٔ `web` با **yarn** مدیریت می‌شود (نه pnpm/npm).
+- بستهٔ `api` با `uv venv` + `requirements.txt` مدیریت می‌شود؛ بدون ORM (بند ۱۶.۲).
 
 ## قواعدی که هرگز نقض نمی‌شوند
 
@@ -49,7 +50,7 @@ api/    FastAPI + SQLite   ← تا فاز ۴ خالی می‌ماند، دست 
 - [x] فاز ۱ — تقویم و تعطیلات
 - [x] فاز ۲ — Yjs + y-indexeddb + کارهای روزانه
 - [x] فاز ۳ — ادیتور TipTap
-- [ ] فاز ۴ — FastAPI + ورود با رمز و TOTP
+- [x] فاز ۴ — FastAPI + ورود با رمز و TOTP
 - [ ] فاز ۵ — رلهٔ WebSocket + snapshot
 - [ ] فاز ۶ — تصویر، ضمیمه، کد، جدول
 - [ ] فاز ۷ — یادداشت آزاد، تگ، جست‌وجو
