@@ -1,0 +1,20 @@
+html {
+  height: 100%;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/* جزیرهٔ LTR — برای کد، لینک، نام فایل انگلیسی وسط متن فارسی */
+.ltr {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
