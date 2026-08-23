@@ -124,7 +124,7 @@ interface Attachment {
 ## ۴. ادیتور
 
 ```bash
-pnpm add @tiptap/react @tiptap/starter-kit @tiptap/extension-underline \
+yarn add @tiptap/react @tiptap/starter-kit @tiptap/extension-underline \
   @tiptap/extension-text-align @tiptap/extension-highlight @tiptap/extension-link \
   @tiptap/extension-table @tiptap/extension-table-row @tiptap/extension-table-cell \
   @tiptap/extension-table-header @tiptap/extension-image @tiptap/extension-placeholder \
@@ -160,7 +160,7 @@ autosave با debounce ۶۰۰ میلی‌ثانیه، به‌علاوهٔ ذخی
 2. `BaseMax/persian-holidays-api` — اسکریپت پایتون که از time.ir می‌گیرد و JSON با فلگ `is_holiday` می‌دهد.
 3. `pnldev.com/api/calender` — وب‌سرویس رایگان بدون کلید. برای seed خوب است، برای زمان اجرا نه.
 
-**روش:** یک بار دیتا را بگیر، در `data/holidays/1404.json`, `1405.json`… ذخیره کن، و اسکریپت `pnpm holidays:sync <year>` بنویس که سالی یک‌بار دستی اجرا شود. اپ در زمان اجرا هرگز به اینترنت وصل نشود — روی گوشی و آفلاین باید کار کند.
+**روش:** یک بار دیتا را بگیر، در `data/holidays/1404.json`, `1405.json`… ذخیره کن، و اسکریپت `yarn holidays:sync <year>` بنویس که سالی یک‌بار دستی اجرا شود. اپ در زمان اجرا هرگز به اینترنت وصل نشود — روی گوشی و آفلاین باید کار کند.
 
 ---
 
@@ -207,7 +207,7 @@ data/holidays/*.json
 ## ۸. RTL و فونت
 
 ```bash
-pnpm add @emotion/cache stylis stylis-plugin-rtl
+yarn add @emotion/cache stylis stylis-plugin-rtl
 ```
 
 ```ts
@@ -252,7 +252,18 @@ const rtlCache = createCache({ key: 'muirtl', stylisPlugins: [prefixer, rtlPlugi
 | شبکهٔ ماه در موبایل | `<SwipeableDrawer anchor="bottom">` |
 | رنگ‌های CSS variable | `theme.palette` — `holiday` را رنگ سفارشی تم کن |
 
-پالت: لاجورد `#1A2238` برای متن، فیروزه‌ای `#0E7C7B` رنگ اصلی، قرمز `#B3261E` که **فقط** برای تعطیلات خرج می‌شود، کاغذ `#F5F3EC`. در تقویم چاپی ایران قرمز معنای مشخصی دارد؛ همان معنا باید در اپ حفظ شود.
+پالت: برگرفته از تم landing پروژهٔ beeplan (`web/src/app/landing`، به‌خصوص `components/preview/tokens.js`) — آبی لاجوردی به‌عنوان رنگ اصلی و فیروزه‌ای به‌عنوان رنگ دوم، هرکدام با یک نسخهٔ روشن و یک نسخهٔ تیره:
+
+| | روشن | تیره |
+|---|---|---|
+| اصلی (آبی لاجوردی) | `#1B6EC4` | `#5AA6F0` |
+| دوم (فیروزه‌ای) | `#0D9488` | `#6FE0D2` |
+| پس‌زمینه | `#F4F7FC` | `#070C16` |
+| کاغذ | `#FFFFFF` | `#0C1422` |
+| متن | `#0E1E33` | `#EAF0F8` |
+| متن کم‌رنگ | `#5A78A0` | `#9DB8EC` |
+
+قرمز `#B3261E` جدا از این پالت می‌ماند و **فقط** برای تعطیلات خرج می‌شود، در هر دو حالت روشن و تیره. در تقویم چاپی ایران قرمز معنای مشخصی دارد؛ همان معنا باید در اپ حفظ شود. مقادیر دقیق در `web/theme/theme.js`.
 
 ---
 
@@ -533,7 +544,7 @@ ydoc.getArray('tasks')        // هر عضو یک Y.Map: {id,title,done,order,pr
 ### ۱۳.۶ کتابخانه‌ها
 
 ```bash
-pnpm add yjs @tiptap/extension-collaboration y-protocols
+yarn add yjs @tiptap/extension-collaboration y-protocols
 # سمت سرور: هیچ‌کدام — بک‌اند FastAPI است و بستهٔ Yjs را باز نمی‌کند (بخش ۱۶)
 ```
 
@@ -587,7 +598,7 @@ pnpm add yjs @tiptap/extension-collaboration y-protocols
 **TOTP (Google Authenticator)**
 
 ```bash
-pnpm add otpauth qrcode
+yarn add otpauth qrcode
 ```
 
 - **پارامترها را دستکاری نکن:** `SHA1`، ۶ رقم، دورهٔ ۳۰ ثانیه. Google Authenticator فقط همین‌ها را می‌فهمد و اگر SHA-256 یا ۸ رقم بدهی، بی‌صدا کد اشتباه تولید می‌کند.
