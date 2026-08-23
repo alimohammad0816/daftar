@@ -1937,6 +1937,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"date-fns-jalali@npm:^4.4.0-0":
+  version: 4.4.0-0
+  resolution: "date-fns-jalali@npm:4.4.0-0"
+  checksum: 10c0/ae8d74c7ca1679a15876e63af36a79264f222d7f575bf1382359b5a3ab98a7212f69abdc102129c77af25a1f736097832a1537635d275fc7aaaed6a8cae26ba1
+  languageName: node
+  linkType: hard
+
 "debug@npm:^3.2.7":
   version: 3.2.7
   resolution: "debug@npm:3.2.7"
@@ -4180,6 +4187,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sql.js@npm:^1.14.2":
+  version: 1.14.2
+  resolution: "sql.js@npm:1.14.2"
+  checksum: 10c0/4c217404d85b7396a2c7b6037a9dc96dd05f10c94847bb8c5df70d387ff37702f51551afc97d338ff2c0d504414bb1d3631d48f2a3f33eaa45e862747135d5d5
+  languageName: node
+  linkType: hard
+
 "stable-hash@npm:^0.0.5":
   version: 0.0.5
   resolution: "stable-hash@npm:0.0.5"
@@ -4614,11 +4628,13 @@ __metadata:
     "@mui/icons-material": "npm:^9.3.1"
     "@mui/material": "npm:^9.3.1"
     "@mui/material-nextjs": "npm:^9.3.0"
+    date-fns-jalali: "npm:^4.4.0-0"
     eslint: "npm:^9"
     eslint-config-next: "npm:16.3.2"
     next: "npm:16.3.2"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
+    sql.js: "npm:^1.14.2"
     stylis: "npm:^4.4.0"
     stylis-plugin-rtl: "npm:^2.1.1"
     typescript: "npm:^5.9.3"
