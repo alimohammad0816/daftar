@@ -18,6 +18,7 @@ import { useSwipe } from '@/lib/useSwipe';
 import WeekStrip from '@/components/calendar/WeekStrip';
 import MonthGrid from '@/components/calendar/MonthGrid';
 import MonthSheet from '@/components/calendar/MonthSheet';
+import TaskList from '@/components/tasks/TaskList';
 
 export default function DayPage() {
   const [selectedDate, setSelectedDate] = useState(() => today());
@@ -36,7 +37,8 @@ export default function DayPage() {
     onSwipeRight: () => selectDay(addDays(selectedDate, -1)),
   });
 
-  const holiday = getHoliday(toDayKey(selectedDate));
+  const dayKey = toDayKey(selectedDate);
+  const holiday = getHoliday(dayKey);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100%' }}>
@@ -87,13 +89,21 @@ export default function DayPage() {
           />
         </Box>
 
-        <Box {...daySwipe} sx={{ flexGrow: 1, p: 3, touchAction: 'pan-y' }}>
-          <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
-            {formatWeekdayLong(selectedDate)}، {formatDayNumber(selectedDate)} {formatMonthYear(selectedDate)}
-          </Typography>
-          {holiday && (
-            <Typography sx={{ mt: 1, color: 'holiday.main', fontWeight: 600 }}>{holiday}</Typography>
-          )}
+        <Box
+          {...daySwipe}
+          sx={{ flexGrow: 1, p: { xs: 2, sm: 3 }, touchAction: 'pan-y', display: 'flex', flexDirection: 'column', gap: 2 }}
+        >
+          <Box>
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+              {formatWeekdayLong(selectedDate)}، {formatDayNumber(selectedDate)} {formatMonthYear(selectedDate)}
+            </Typography>
+            {holiday && (
+              <Typography sx={{ mt: 0.5, color: 'holiday.main', fontWeight: 600 }}>{holiday}</Typography>
+            )}
+          </Box>
+
+          {/* key=dayKey: با عوض شدن روز، حالت باز/بسته و ref داخلی TaskList هم تازه شود */}
+          <TaskList key={dayKey} dayKey={dayKey} />
         </Box>
       </Box>
 

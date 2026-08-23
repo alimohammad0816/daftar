@@ -47,7 +47,7 @@ api/    FastAPI + SQLite   ← تا فاز ۴ خالی می‌ماند، دست 
 
 - [x] فاز ۰ — اسکلت
 - [x] فاز ۱ — تقویم و تعطیلات
-- [ ] فاز ۲ — Yjs + y-indexeddb + کارهای روزانه
+- [x] فاز ۲ — Yjs + y-indexeddb + کارهای روزانه
 - [ ] فاز ۳ — ادیتور TipTap
 - [ ] فاز ۴ — FastAPI + ورود با رمز و TOTP
 - [ ] فاز ۵ — رلهٔ WebSocket + snapshot

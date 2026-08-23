@@ -3171,6 +3171,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"isomorphic.js@npm:^0.2.4":
+  version: 0.2.5
+  resolution: "isomorphic.js@npm:0.2.5"
+  checksum: 10c0/7cd268c8e58146a8160c8cd16596291fd1fbf3e8799a325f269accda9dc1238806e371ccef0b66fe2ad957209230c55997248d8b6d02cf2d7c575ffeb759c789
+  languageName: node
+  linkType: hard
+
 "iterator.prototype@npm:^1.1.5":
   version: 1.1.5
   resolution: "iterator.prototype@npm:1.1.5"
@@ -3304,6 +3311,19 @@ __metadata:
     prelude-ls: "npm:^1.2.1"
     type-check: "npm:~0.4.0"
   checksum: 10c0/effb03cad7c89dfa5bd4f6989364bfc79994c2042ec5966cb9b95990e2edee5cd8969ddf42616a0373ac49fac1403437deaf6e9050fbbaa3546093a59b9ac94e
+  languageName: node
+  linkType: hard
+
+"lib0@npm:^0.2.74, lib0@npm:^0.2.99":
+  version: 0.2.117
+  resolution: "lib0@npm:0.2.117"
+  dependencies:
+    isomorphic.js: "npm:^0.2.4"
+  bin:
+    0ecdsa-generate-keypair: bin/0ecdsa-generate-keypair.js
+    0gentesthtml: bin/gentesthtml.js
+    0serve: bin/0serve.js
+  checksum: 10c0/d1b9205890d5d0cbd95ffdb0d6df6f9fd2c315b89e195fc9b015f3778046fb34bc12e94205ccf410a3073b836444045dcef6671fa2f6d5a7f70ebf8b6b0c0616
   languageName: node
   linkType: hard
 
@@ -4638,6 +4658,8 @@ __metadata:
     stylis: "npm:^4.4.0"
     stylis-plugin-rtl: "npm:^2.1.1"
     typescript: "npm:^5.9.3"
+    y-indexeddb: "npm:^9.0.12"
+    yjs: "npm:^13.6.32"
   languageName: unknown
   linkType: soft
 
@@ -4720,6 +4742,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"y-indexeddb@npm:^9.0.12":
+  version: 9.0.12
+  resolution: "y-indexeddb@npm:9.0.12"
+  dependencies:
+    lib0: "npm:^0.2.74"
+  peerDependencies:
+    yjs: ^13.0.0
+  checksum: 10c0/b31fbc12ef4a7d71f09212db02570af07c6a17b02537ce4cbb29f0549137adcbebf613cb2af63fa1d13e0932645be0293a4e7189cb5bf5dc6263cf2f72b65004
+  languageName: node
+  linkType: hard
+
 "yallist@npm:^3.0.2":
   version: 3.1.1
   resolution: "yallist@npm:3.1.1"
@@ -4731,6 +4764,15 @@ __metadata:
   version: 1.10.3
   resolution: "yaml@npm:1.10.3"
   checksum: 10c0/c309ff85a0a569a981d71ab9cf0fef68672a16b9cdf40639d1c3b30034f6cd16ee428602bd6d64ecf006f8c8bee499023cac236538f79898aa99fb5db529a2ed
+  languageName: node
+  linkType: hard
+
+"yjs@npm:^13.6.32":
+  version: 13.6.32
+  resolution: "yjs@npm:13.6.32"
+  dependencies:
+    lib0: "npm:^0.2.99"
+  checksum: 10c0/07b50f475d3749a6b135e959fdc805eea8e7fdad4d6177b151c9d30463399577586252e34b3949fdd03260ee7b8526fa01a8b10c64e2506fc96ca6e22ae58032
   languageName: node
   linkType: hard
 

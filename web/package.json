@@ -21,7 +21,9 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "stylis": "^4.4.0",
-    "stylis-plugin-rtl": "^2.1.1"
+    "stylis-plugin-rtl": "^2.1.1",
+    "y-indexeddb": "^9.0.12",
+    "yjs": "^13.6.32"
   },
   "devDependencies": {
     "eslint": "^9",
