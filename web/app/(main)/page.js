@@ -19,6 +19,7 @@ import WeekStrip from '@/components/calendar/WeekStrip';
 import MonthGrid from '@/components/calendar/MonthGrid';
 import MonthSheet from '@/components/calendar/MonthSheet';
 import TaskList from '@/components/tasks/TaskList';
+import Editor from '@/components/editor/Editor';
 
 export default function DayPage() {
   const [selectedDate, setSelectedDate] = useState(() => today());
@@ -104,6 +105,10 @@ export default function DayPage() {
 
           {/* key=dayKey: با عوض شدن روز، حالت باز/بسته و ref داخلی TaskList هم تازه شود */}
           <TaskList key={dayKey} dayKey={dayKey} />
+
+          <Box sx={{ flexGrow: 1, border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+            <Editor key={dayKey} dayKey={dayKey} />
+          </Box>
         </Box>
       </Box>
 

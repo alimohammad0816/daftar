@@ -3,9 +3,10 @@
 import { useRef, useCallback } from 'react';
 
 const THRESHOLD_PX = 50;
-// شروع کشیدن از روی چک‌باکس/دکمه/ورودی نباید سوایپ حساب شود — وگرنه انتخاب
-// متن داخل TaskInput یا تیک‌زدن یک کار می‌تواند روز را عوض کند.
-const INTERACTIVE_SELECTOR = 'input, textarea, button, [role="button"], [role="checkbox"]';
+// شروع کشیدن از روی چک‌باکس/دکمه/ورودی/ادیتور نباید سوایپ حساب شود — وگرنه
+// انتخاب متن داخل TaskInput یا ادیتور TipTap (فاز ۳) می‌تواند روز را عوض کند.
+const INTERACTIVE_SELECTOR =
+  'input, textarea, button, [role="button"], [role="checkbox"], [contenteditable="true"]';
 
 // سوایپ افقی با Pointer Events — هم لمسی و هم موس را پوشش می‌دهد، بدون کتابخانهٔ
 // جانبی. قرارداد جهت: سوایپ به چپ (کشیدن انگشت راست→چپ) یعنی جلو/بعدی.
