@@ -10,6 +10,11 @@ DATA_DIR = Path(os.environ.get("DAFTAR_DATA_DIR", API_DIR / "data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "daftar.db"
 
+# بند ۱۶.۴: «ضمیمه‌ها روی دیسک... نه داخل SQLite».
+BLOBS_DIR = DATA_DIR / "blobs"
+BLOBS_DIR.mkdir(parents=True, exist_ok=True)
+MAX_BLOB_SIZE = 25 * 1024 * 1024  # بند ۱۲.۶: سقف ۲۵ مگابایت
+
 # رمزنگاری totp_secret در حالت سکون — بند ۱۴.۲: «یک کلید ثابت در متغیر محیطی کافی است».
 # scripts/create_user.py اگر این مقدار نبود، یکی می‌سازد و راهنمایی می‌کند.
 TOTP_ENC_KEY = os.environ.get("DAFTAR_TOTP_ENC_KEY")

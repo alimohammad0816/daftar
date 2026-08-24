@@ -3,7 +3,6 @@ import sqlite3
 from app.config import DB_PATH
 
 # بند ۱۶.۲: «در این ابعاد ORM لازم نیست و فقط لایه اضافه می‌کند» — sqlite3 خام.
-# جدول blob فاز ۶ است، اینجا نیست.
 SCHEMA = """
 PRAGMA journal_mode = WAL;
 
@@ -54,6 +53,14 @@ CREATE TABLE IF NOT EXISTS doc_snapshot (
   doc_id TEXT PRIMARY KEY,
   seq INTEGER NOT NULL,
   payload BLOB NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+-- بند ۱۶.۴ — خودِ فایل روی دیسک در data/blobs/{hash[:2]}/{hash} است، نه اینجا.
+CREATE TABLE IF NOT EXISTS blob (
+  hash TEXT PRIMARY KEY,
+  size INTEGER NOT NULL,
+  mime TEXT,
   created_at TEXT NOT NULL
 );
 """

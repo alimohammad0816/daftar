@@ -6,11 +6,17 @@ import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
 import Collaboration from '@tiptap/extension-collaboration';
+import { TableKit } from '@tiptap/extension-table';
+import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import Box from '@mui/material/Box';
 import { getDayDoc } from '@/lib/ydoc';
 import { Direction } from './extensions/Direction';
+import { AttachmentImage } from './extensions/AttachmentImage';
+import { FileAttachment } from './extensions/FileAttachment';
+import { lowlight } from './extensions/codeLanguages';
 import Toolbar from './Toolbar';
 import MobileToolbar from './MobileToolbar';
+import TableControls from './TableControls';
 
 // «autosave» بند ۹ دیگر یک تایمر جداگانه نیست: Collaboration هر تراکنش را
 // مستقیم در ydoc.getXmlFragment('note') می‌نویسد و IndexeddbPersistence
@@ -24,11 +30,15 @@ export default function Editor({ dayKey }) {
     {
       immediatelyRender: false,
       extensions: [
-        StarterKit.configure({ undoRedo: false }),
+        StarterKit.configure({ undoRedo: false, codeBlock: false }),
         Highlight,
         Direction,
         Placeholder.configure({ placeholder: 'یادداشت این روز را بنویس…' }),
         Collaboration.configure({ document: ydoc, field: 'note' }),
+        CodeBlockLowlight.configure({ lowlight }),
+        TableKit.configure({ table: { resizable: false } }),
+        AttachmentImage,
+        FileAttachment,
       ],
       onFocus: () => setFocused(true),
       onBlur: () => setFocused(false),
@@ -63,6 +73,43 @@ export default function Editor({ dayKey }) {
             color: 'text.secondary',
           },
           '& .ProseMirror ul, & .ProseMirror ol': { paddingInlineStart: 3 },
+          // دام CLAUDE.md: بلوک کد باید dir="ltr" اجباری داشته باشد وگرنه کد
+          // فارسی‌چین و ناخواناست — صرف‌نظر از جهت پاراگراف اطرافش. stylis-plugin-rtl
+          // حتی direction را هم آینه می‌کند (نه فقط left/right فیزیکی)، پس اینجا هم
+          // باید برعکس بنویسیم تا خروجی نهایی واقعاً ltr شود — دقیقاً مثل ترفند float بالا.
+          '& .ProseMirror pre': {
+            direction: 'rtl',
+            textAlign: 'right',
+            unicodeBidi: 'isolate',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+            fontSize: '0.85rem',
+            bgcolor: 'action.hover',
+            color: 'text.primary',
+            p: 1.5,
+            my: 1,
+            borderRadius: 2,
+            overflowX: 'auto',
+          },
+          '& .ProseMirror pre code': { fontFamily: 'inherit', whiteSpace: 'pre' },
+          // بند ۴ (تصمیم کاربر): جدول برخلاف بلوک کد dir="rtl" می‌گیرد تا ستون
+          // اول راست باشد؛ خودِ افزونهٔ Table یک div.tableWrapper اطرافش
+          // می‌گذارد — overflowX همان‌جا برای گوشی («روی موبایل دردسر است»).
+          '& .ProseMirror .tableWrapper': { overflowX: 'auto', my: 1 },
+          // اینجا هم برعکس می‌نویسیم (بند بالا دربارهٔ pre) تا بعد از آینه‌شدن
+          // stylis-plugin-rtl، خروجی واقعاً rtl شود — ستون اول راست بماند.
+          '& .ProseMirror table': {
+            direction: 'ltr',
+            borderCollapse: 'collapse',
+            width: '100%',
+          },
+          '& .ProseMirror th, & .ProseMirror td': {
+            border: '1px solid',
+            borderColor: 'divider',
+            p: 1,
+            minWidth: 96,
+            verticalAlign: 'top',
+          },
+          '& .ProseMirror th': { bgcolor: 'action.hover', fontWeight: 700 },
           // زرد پیش‌فرض مرورگر برای mark (از normalize.css) نگه داشته می‌شود —
           // قرمز طرح فقط برای تعطیلات خرج می‌شود، جای دیگری نه.
           '& .ProseMirror .is-editor-empty:first-of-type::before': {
@@ -80,6 +127,7 @@ export default function Editor({ dayKey }) {
       </Box>
 
       {focused && <MobileToolbar editor={editor} />}
+      <TableControls editor={editor} />
     </Box>
   );
 }

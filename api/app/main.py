@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import config
 from app.auth import router as auth_router
+from app.blobs import router as blobs_router
 from app.db import init_db
 from app.sync import router as sync_router
 
@@ -27,6 +28,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(sync_router)
+app.include_router(blobs_router)
 
 
 @app.get("/health")

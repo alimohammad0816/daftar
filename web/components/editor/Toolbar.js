@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { useEditorState } from '@tiptap/react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -13,6 +14,11 @@ import FormatQuoteRoundedIcon from '@mui/icons-material/FormatQuoteRounded';
 import BorderColorRoundedIcon from '@mui/icons-material/BorderColorRounded';
 import FormatTextdirectionRToLRoundedIcon from '@mui/icons-material/FormatTextdirectionRToLRounded';
 import FormatTextdirectionLToRRoundedIcon from '@mui/icons-material/FormatTextdirectionLToRRounded';
+import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
+import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
+import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
+import GridOnRoundedIcon from '@mui/icons-material/GridOnRounded';
+import { insertFileIntoEditor } from '@/lib/insertAttachment';
 
 function ToolbarButton({ active, onClick, label, children }) {
   return (
@@ -55,15 +61,29 @@ function useToolbarState(editor) {
       blockquote: e?.isActive('blockquote') ?? false,
       highlight: e?.isActive('highlight') ?? false,
       isLtr: e?.isActive({ dir: 'ltr' }) ?? false,
+      codeBlock: e?.isActive('codeBlock') ?? false,
     }),
   });
 }
 
 export default function Toolbar({ editor }) {
   const state = useToolbarState(editor);
+  const imageInputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   if (!editor || !state) return null;
-  const { bold, italic, heading, bulletList, orderedList, blockquote, highlight, isLtr } = state;
+  const { bold, italic, heading, bulletList, orderedList, blockquote, highlight, isLtr, codeBlock } = state;
+
+  const handleFilePicked = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      await insertFileIntoEditor(editor, file);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <Box
@@ -137,6 +157,31 @@ export default function Toolbar({ editor }) {
           <FormatTextdirectionLToRRoundedIcon fontSize="small" />
         )}
       </ToolbarButton>
+      <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 1 }} />
+      <ToolbarButton label="بلوک کد" active={codeBlock} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
+        <CodeRoundedIcon fontSize="small" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="جدول"
+        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+      >
+        <GridOnRoundedIcon fontSize="small" />
+      </ToolbarButton>
+      <ToolbarButton label="تصویر" onClick={() => imageInputRef.current?.click()}>
+        <ImageRoundedIcon fontSize="small" />
+      </ToolbarButton>
+      <ToolbarButton label="ضمیمه" onClick={() => fileInputRef.current?.click()}>
+        <AttachFileRoundedIcon fontSize="small" />
+      </ToolbarButton>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={handleFilePicked}
+      />
+      <input ref={fileInputRef} type="file" hidden onChange={handleFilePicked} />
     </Box>
   );
 }
