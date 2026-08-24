@@ -35,12 +35,20 @@ python scripts/create_user.py        # یک‌بار — کاربر اولیه +
 
 ```bash
 source .venv/bin/activate
-DAFTAR_COOKIE_SECURE=false uvicorn app.main:app --reload --port 8000
+python run.py
+```
+
+`run.py` معادل کوتاه‌شدهٔ این است — همان دستوری که خودش زیر کاپوت اجرا می‌کند:
+
+```bash
+DAFTAR_COOKIE_SECURE=false uvicorn app.main:app --reload --port 8000 --workers 1
 ```
 
 `DAFTAR_COOKIE_SECURE=false` فقط برای dev محلی روی `http://localhost` لازم است —
 مرورگر کوکی `Secure` را روی غیر-HTTPS ذخیره نمی‌کند. روی سرور واقعی این متغیر
-را نگذار؛ HTTPS اجباری است (بند ۱۴.۳).
+را نگذار؛ HTTPS اجباری است (بند ۱۴.۳). `run.py` فقط اگر از قبل در محیط تنظیم
+نشده باشد آن را false می‌گذارد، پس برای شبیه‌سازی production کافی است خودت
+از قبل `DAFTAR_COOKIE_SECURE=true` صادر کنی.
 
 فرانت‌اند با `NEXT_PUBLIC_API_URL` (پیش‌فرض `http://localhost:8000`) به اینجا وصل می‌شود.
 
