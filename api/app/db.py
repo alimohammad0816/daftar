@@ -3,7 +3,7 @@ import sqlite3
 from app.config import DB_PATH
 
 # بند ۱۶.۲: «در این ابعاد ORM لازم نیست و فقط لایه اضافه می‌کند» — sqlite3 خام.
-# جدول‌های doc_update/doc_snapshot/blob فاز ۵/۶ هستند، اینجا نیستند.
+# جدول blob فاز ۶ است، اینجا نیست.
 SCHEMA = """
 PRAGMA journal_mode = WAL;
 
@@ -38,6 +38,23 @@ CREATE TABLE IF NOT EXISTS login_attempt (
   stage TEXT NOT NULL,
   at TEXT NOT NULL,
   ok INTEGER NOT NULL
+);
+
+-- بند ۱۶.۴ — رلهٔ کور: payload هرگز parse نمی‌شود، حتی برای دیباگ (بند ۱۴.۴).
+CREATE TABLE IF NOT EXISTS doc_update (
+  doc_id TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  payload BLOB NOT NULL,
+  device_id TEXT,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (doc_id, seq)
+);
+
+CREATE TABLE IF NOT EXISTS doc_snapshot (
+  doc_id TEXT PRIMARY KEY,
+  seq INTEGER NOT NULL,
+  payload BLOB NOT NULL,
+  created_at TEXT NOT NULL
 );
 """
 

@@ -81,6 +81,20 @@ def _require_pending_user(request: Request) -> int:
     return user_id
 
 
+def lookup_session(conn: sqlite3.Connection, token: str) -> sqlite3.Row | None:
+    """فقط اعتبارسنجی + حذف نشست منقضی — بدون تمدید غلتان (که به Response نیاز
+    دارد و برای اتصال WebSocket در sync.py معنا ندارد)."""
+    token_hash = security.hash_session_token(token)
+    row = conn.execute("SELECT * FROM session WHERE token_hash = ?", (token_hash,)).fetchone()
+    if row is None:
+        return None
+    if datetime.fromisoformat(row["expires_at"]) < datetime.now(UTC):
+        conn.execute("DELETE FROM session WHERE token_hash = ?", (token_hash,))
+        conn.commit()
+        return None
+    return row
+
+
 def get_current_session(request: Request, response: Response) -> sqlite3.Row:
     """برای مسیرهای فاز‌های بعدی هم قابل استفاده است — بند ۱۶.۵: «همهٔ مسیرها
     جز /auth/* نیازمند نشست معتبرند»."""
@@ -88,20 +102,14 @@ def get_current_session(request: Request, response: Response) -> sqlite3.Row:
     if not token:
         raise HTTPException(status_code=401, detail="نشست معتبر نیست")
 
-    token_hash = security.hash_session_token(token)
     conn = get_connection()
     try:
-        row = conn.execute("SELECT * FROM session WHERE token_hash = ?", (token_hash,)).fetchone()
+        row = lookup_session(conn, token)
         if row is None:
-            raise HTTPException(status_code=401, detail="نشست معتبر نیست")
+            raise HTTPException(status_code=401, detail="نشست معتبر نیست یا منقضی شده — دوباره وارد شو")
 
         now = datetime.now(UTC)
         expires_at = datetime.fromisoformat(row["expires_at"])
-        if expires_at < now:
-            conn.execute("DELETE FROM session WHERE token_hash = ?", (token_hash,))
-            conn.commit()
-            raise HTTPException(status_code=401, detail="نشست منقضی شده — دوباره وارد شو")
-
         # تمدید غلتان — بند ۱۴.۲: «عمر بلند (۳۰ روز) با تمدید غلتان»
         new_expires = expires_at
         if expires_at - now < timedelta(days=config.SESSION_RENEW_THRESHOLD_DAYS):
@@ -110,7 +118,7 @@ def get_current_session(request: Request, response: Response) -> sqlite3.Row:
 
         conn.execute(
             "UPDATE session SET last_seen_at = ?, expires_at = ? WHERE token_hash = ?",
-            (now.isoformat(), new_expires.isoformat(), token_hash),
+            (now.isoformat(), new_expires.isoformat(), security.hash_session_token(token)),
         )
         conn.commit()
         return row

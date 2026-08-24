@@ -15,6 +15,7 @@ import {
 } from '@/lib/jalali';
 import { getHoliday } from '@/lib/holidays';
 import { useSwipe } from '@/lib/useSwipe';
+import { useLiveSync } from '@/lib/useLiveSync';
 import WeekStrip from '@/components/calendar/WeekStrip';
 import MonthGrid from '@/components/calendar/MonthGrid';
 import MonthSheet from '@/components/calendar/MonthSheet';
@@ -40,6 +41,7 @@ export default function DayPage() {
 
   const dayKey = toDayKey(selectedDate);
   const holiday = getHoliday(dayKey);
+  useLiveSync(dayKey);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100%' }}>
