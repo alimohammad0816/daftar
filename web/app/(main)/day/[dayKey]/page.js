@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -28,9 +29,15 @@ export default function DayPage() {
 
   // یادداشت آزادِ متصل به این روز (بند ۳: dayKey اختیاری) فقط یک برچسب روی
   // سند مستقل خودش است، با سند این روز ادغام نمی‌شود — پس اینجا باید صریح
-  // لینکش را نشان بدهیم وگرنه از دید کاربر «گم» به نظر می‌رسد.
-  const { notes } = useNotesIndex();
-  const linkedNotes = notes.filter((n) => n.dayKey === dayKey);
+  // لینکش را نشان بدهیم وگرنه از دید کاربر «گم» به نظر می‌رسد. kind !== 'daily'
+  // چون ورودی خودِ این روز هم در همین فهرست است و نباید به خودش لینک بدهد.
+  const { notes, setDailyNoteText } = useNotesIndex();
+  const linkedNotes = notes.filter((n) => n.dayKey === dayKey && n.kind !== 'daily');
+
+  // متن ادیتور همین روز هم در سند index کش می‌شود — دقیقاً همان الگویی که
+  // یادداشت آزاد و کارهای پین‌شده دارند — تا صفحهٔ یادداشت‌ها بدون باز کردن
+  // سند هر روز، یادداشت‌های روزانه را هم فهرست/جست‌وجو کند.
+  const handleTextChange = useCallback((text) => setDailyNoteText(dayKey, text), [dayKey, setDailyNoteText]);
 
   const goToDay = (d) => router.push(`/day/${toDayKey(d)}`);
   const daySwipe = useSwipe({
@@ -89,7 +96,7 @@ export default function DayPage() {
       <TaskList key={dayKey} dayKey={dayKey} />
 
       <Box sx={{ flexGrow: 1 }}>
-        <Editor key={dayKey} docId={dayKey} />
+        <Editor key={dayKey} docId={dayKey} onTextChange={handleTextChange} />
       </Box>
     </Box>
   );

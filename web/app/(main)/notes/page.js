@@ -16,8 +16,9 @@ import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import { formatDayNumber, formatMonthYear, fromDayKey } from '@/lib/jalali';
 import { useNotesIndex } from '@/lib/useNotesIndex';
 
-// فاز ۷ (نسخهٔ اولیه، بدون تگ): فهرست یادداشت‌های آزاد + جست‌وجوی سمت کلاینت
-// روی عنوان/متن — هر دو از سند index می‌آیند، بدون باز کردن سند هر یادداشت.
+// فاز ۷ (نسخهٔ اولیه، بدون تگ): فهرست یادداشت‌ها — روزانه + آزاد، هر دو با
+// هم، دقیقاً مثل «کارها» — + جست‌وجوی سمت کلاینت روی عنوان/متن. هر دو از سند
+// index می‌آیند، بدون باز کردن سند هر یادداشت.
 export default function NotesPage() {
   const router = useRouter();
   const { notes, createNote } = useNotesIndex();
@@ -53,27 +54,31 @@ export default function NotesPage() {
       {filtered.length === 0 ? (
         <Box sx={{ textAlign: 'center', color: 'text.secondary', py: 6 }}>
           <StickyNote2RoundedIcon sx={{ fontSize: 40, opacity: 0.5, mb: 1 }} />
-          <Typography>{notes.length === 0 ? 'هنوز یادداشت آزادی نداری' : 'چیزی پیدا نشد'}</Typography>
+          <Typography>{notes.length === 0 ? 'هنوز یادداشتی نداری' : 'چیزی پیدا نشد'}</Typography>
         </Box>
       ) : (
         <Paper elevation={0} sx={{ overflow: 'hidden' }}>
           {filtered.map((note, i) => {
+            const isDaily = note.kind === 'daily';
             const date = note.dayKey ? fromDayKey(note.dayKey) : new Date(note.updatedAt);
+            const dateLabel = `${formatDayNumber(date)} ${formatMonthYear(date)}`;
             return (
               <Box key={note.id}>
                 {i > 0 && <Divider sx={{ borderColor: 'glass.border' }} />}
                 <ButtonBase
-                  onClick={() => router.push(`/notes/${note.id}`)}
+                  onClick={() => router.push(isDaily ? `/day/${note.dayKey}` : `/notes/${note.id}`)}
                   sx={{ width: '100%', display: 'block', textAlign: 'start', px: 2, py: 1.5, minHeight: 44 }}
                 >
                   <Typography sx={{ fontWeight: 700 }} noWrap>
-                    {note.title || 'بی‌عنوان'}
+                    {isDaily ? dateLabel : note.title || 'بی‌عنوان'}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                    {note.dayKey && <EventRoundedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />}
-                    <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-                      {formatDayNumber(date)} {formatMonthYear(date)}
-                    </Typography>
+                    {!isDaily && note.dayKey && <EventRoundedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />}
+                    {!isDaily && (
+                      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+                        {dateLabel}
+                      </Typography>
+                    )}
                     {note.plain && (
                       <Typography variant="body2" color="text.secondary" noWrap sx={{ minWidth: 0 }}>
                         {note.plain}
