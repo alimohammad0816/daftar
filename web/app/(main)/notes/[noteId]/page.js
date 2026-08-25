@@ -13,6 +13,7 @@ import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import { getYDoc } from '@/lib/ydoc';
 import { useLiveSync } from '@/lib/useLiveSync';
 import { useNotesIndex } from '@/lib/useNotesIndex';
+import { appendNoteContentToDay } from '@/lib/mergeNoteContent';
 import { fromDayKey, toDayKey, formatDayNumber, formatMonthYear } from '@/lib/jalali';
 import Editor from '@/components/editor/Editor';
 import DayPickerSheet from '@/components/notes/DayPickerSheet';
@@ -28,7 +29,7 @@ export default function FreeNotePage() {
   const docId = `note:${noteId}`;
   useLiveSync(docId, getYDoc);
 
-  const { notes, updateNoteMeta, deleteNote } = useNotesIndex();
+  const { notes, updateNoteMeta, deleteNote, setDailyNoteText } = useNotesIndex();
   const entry = notes.find((n) => n.id === noteId);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
 
@@ -42,6 +43,21 @@ export default function FreeNotePage() {
   const handleDelete = () => {
     deleteNote(noteId);
     router.push('/notes');
+  };
+
+  // درخواست کاربر: اتصال یادداشت آزاد به یک روز فقط برچسب نباشد — متنش هم
+  // به انتهای یادداشت همان روز اضافه شود تا چیزی از دست نرود. خلاصهٔ متن
+  // ساده در index هم همین‌جا به‌روز می‌شود (نه در انتظار onTextChange ادیتور
+  // آن روز) تا یادداشت روزانه بلافاصله در فهرست/جست‌وجو هم دیده شود.
+  const handleSelectDay = (date) => {
+    const dayKey = toDayKey(date);
+    appendNoteContentToDay(docId, dayKey);
+    if (entry?.plain) {
+      const dayEntry = notes.find((n) => n.id === dayKey);
+      const mergedPlain = [dayEntry?.plain, entry.plain].filter(Boolean).join(' ');
+      setDailyNoteText(dayKey, mergedPlain);
+    }
+    updateNoteMeta(noteId, { dayKey });
   };
 
   return (
@@ -88,7 +104,7 @@ export default function FreeNotePage() {
         onOpen={() => setDayPickerOpen(true)}
         onClose={() => setDayPickerOpen(false)}
         selectedDate={entry?.dayKey ? fromDayKey(entry.dayKey) : null}
-        onSelectDay={(date) => updateNoteMeta(noteId, { dayKey: toDayKey(date) })}
+        onSelectDay={handleSelectDay}
       />
 
       <Box sx={{ flexGrow: 1 }}>
