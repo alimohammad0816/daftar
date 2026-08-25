@@ -24,11 +24,14 @@ function getProvider(docId, getDoc) {
 // (بند ۱۳.۵ مورد ۳: قطع در visibilitychange، همگام‌سازی کامل هنگام بازگشت).
 // وضعیت‌های ممکن: connecting | connected | disconnected | error | paused
 // getDoc پیش‌فرض getDayDoc است (سند روزانه)؛ فاز ۷ با getYDoc همین هوک را
-// برای سند یادداشت آزاد و سند index هم استفاده می‌کند.
+// برای سند یادداشت و سند index هم استفاده می‌کند. docId می‌تواند null باشد
+// (مثلاً صفحهٔ روزی که هنوز یادداشتی وصل ندارد) — یعنی چیزی برای همگام‌سازی
+// نیست، بدون شکستن قانون هوک‌ها (هوک هنوز هر بار صدا زده می‌شود).
 export function useLiveSync(docId, getDoc = getDayDoc) {
   const [status, setStatus] = useState('connecting');
 
   useEffect(() => {
+    if (!docId) return undefined;
     const provider = getProvider(docId, getDoc);
     const unsubscribe = provider.onStatus(setStatus);
 

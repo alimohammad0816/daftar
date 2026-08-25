@@ -16,9 +16,10 @@ import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import { formatDayNumber, formatMonthYear, fromDayKey } from '@/lib/jalali';
 import { useNotesIndex } from '@/lib/useNotesIndex';
 
-// فاز ۷ (نسخهٔ اولیه، بدون تگ): فهرست یادداشت‌ها — روزانه + آزاد، هر دو با
-// هم، دقیقاً مثل «کارها» — + جست‌وجوی سمت کلاینت روی عنوان/متن. هر دو از سند
-// index می‌آیند، بدون باز کردن سند هر یادداشت.
+// فاز ۷ (نسخهٔ اولیه، بدون تگ): فهرست یادداشت‌ها + جست‌وجوی سمت کلاینت روی
+// عنوان/متن. یک یادداشت وجود دارد، نه دو نوع جدا — بعضی به یک روز وصل‌اند
+// (dayKey، بند ۳) و بعضی نه؛ همه از یک سند مستقل خودشان می‌آیند و همیشه به
+// /notes/{id} باز می‌شوند (نه هیچ‌وقت به /day/…).
 export default function NotesPage() {
   const router = useRouter();
   const { notes, createNote } = useNotesIndex();
@@ -59,22 +60,21 @@ export default function NotesPage() {
       ) : (
         <Paper elevation={0} sx={{ overflow: 'hidden' }}>
           {filtered.map((note, i) => {
-            const isDaily = note.kind === 'daily';
             const date = note.dayKey ? fromDayKey(note.dayKey) : new Date(note.updatedAt);
             const dateLabel = `${formatDayNumber(date)} ${formatMonthYear(date)}`;
             return (
               <Box key={note.id}>
                 {i > 0 && <Divider sx={{ borderColor: 'glass.border' }} />}
                 <ButtonBase
-                  onClick={() => router.push(isDaily ? `/day/${note.dayKey}` : `/notes/${note.id}`)}
+                  onClick={() => router.push(`/notes/${note.id}`)}
                   sx={{ width: '100%', display: 'block', textAlign: 'start', px: 2, py: 1.5, minHeight: 44 }}
                 >
                   <Typography sx={{ fontWeight: 700 }} noWrap>
-                    {isDaily ? dateLabel : note.title || 'بی‌عنوان'}
+                    {note.title || (note.dayKey ? dateLabel : 'بی‌عنوان')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-                    {!isDaily && note.dayKey && <EventRoundedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />}
-                    {!isDaily && (
+                    {note.dayKey && <EventRoundedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />}
+                    {note.dayKey && (
                       <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
                         {dateLabel}
                       </Typography>

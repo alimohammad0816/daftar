@@ -1,19 +1,21 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
+import Snackbar from '@mui/material/Snackbar';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import { getYDoc } from '@/lib/ydoc';
 import { useLiveSync } from '@/lib/useLiveSync';
 import { useNotesIndex } from '@/lib/useNotesIndex';
-import { appendNoteContentToDay } from '@/lib/mergeNoteContent';
+import { useManualSave } from '@/lib/useManualSave';
 import { fromDayKey, toDayKey, formatDayNumber, formatMonthYear } from '@/lib/jalali';
 import Editor from '@/components/editor/Editor';
 import DayPickerSheet from '@/components/notes/DayPickerSheet';
@@ -29,9 +31,11 @@ export default function FreeNotePage() {
   const docId = `note:${noteId}`;
   useLiveSync(docId, getYDoc);
 
-  const { notes, updateNoteMeta, deleteNote, setDailyNoteText } = useNotesIndex();
+  const { notes, updateNoteMeta, deleteNote, connectNoteToDay } = useNotesIndex();
   const entry = notes.find((n) => n.id === noteId);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
+  const editorRef = useRef(null);
+  const { handleSave, toastOpen, closeToast } = useManualSave(editorRef);
 
   const handleTextChange = useCallback(
     (text) => {
@@ -45,19 +49,12 @@ export default function FreeNotePage() {
     router.push('/notes');
   };
 
-  // درخواست کاربر: اتصال یادداشت آزاد به یک روز فقط برچسب نباشد — متنش هم
-  // به انتهای یادداشت همان روز اضافه شود تا چیزی از دست نرود. خلاصهٔ متن
-  // ساده در index هم همین‌جا به‌روز می‌شود (نه در انتظار onTextChange ادیتور
-  // آن روز) تا یادداشت روزانه بلافاصله در فهرست/جست‌وجو هم دیده شود.
+  // یک روز حداکثر یک یادداشت وصل دارد؛ اگر آن روز از قبل یادداشت دیگری
+  // داشت، این یادداشت با آن ادغام می‌شود (چیزی از دست نرود) و خودش حذف
+  // می‌شود — پس باید به شناسهٔ یادداشتِ نهایی (که ممکن است همین نباشد) برویم.
   const handleSelectDay = (date) => {
-    const dayKey = toDayKey(date);
-    appendNoteContentToDay(docId, dayKey);
-    if (entry?.plain) {
-      const dayEntry = notes.find((n) => n.id === dayKey);
-      const mergedPlain = [dayEntry?.plain, entry.plain].filter(Boolean).join(' ');
-      setDailyNoteText(dayKey, mergedPlain);
-    }
-    updateNoteMeta(noteId, { dayKey });
+    const survivingId = connectNoteToDay(noteId, toDayKey(date));
+    if (survivingId !== noteId) router.push(`/notes/${survivingId}`);
   };
 
   return (
@@ -73,6 +70,9 @@ export default function FreeNotePage() {
           fullWidth
           sx={{ fontSize: '1.1rem', fontWeight: 700 }}
         />
+        <IconButton onClick={handleSave} aria-label="ذخیره (Ctrl+S)" sx={{ width: 44, height: 44 }}>
+          <SaveRoundedIcon fontSize="small" />
+        </IconButton>
         <IconButton onClick={handleDelete} aria-label="حذف یادداشت" sx={{ width: 44, height: 44 }}>
           <DeleteOutlineRoundedIcon />
         </IconButton>
@@ -110,12 +110,22 @@ export default function FreeNotePage() {
       <Box sx={{ flexGrow: 1 }}>
         <Editor
           key={docId}
+          ref={editorRef}
           docId={docId}
           getDoc={getYDoc}
           placeholder="یادداشت را بنویس…"
           onTextChange={handleTextChange}
         />
       </Box>
+
+      <Snackbar
+        open={toastOpen}
+        onClose={closeToast}
+        autoHideDuration={1500}
+        message="ذخیره شد"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{ bottom: { xs: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' } }}
+      />
     </Box>
   );
 }

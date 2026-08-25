@@ -1,49 +1,83 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
-import ButtonBase from '@mui/material/ButtonBase';
+import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
+import Snackbar from '@mui/material/Snackbar';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import StickyNote2RoundedIcon from '@mui/icons-material/StickyNote2Rounded';
+import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
+import NoteAddRoundedIcon from '@mui/icons-material/NoteAddRounded';
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import { addDays, formatDayNumber, formatMonthYear, formatWeekdayLong, fromDayKey, toDayKey } from '@/lib/jalali';
 import { getHoliday } from '@/lib/holidays';
 import { useSwipe } from '@/lib/useSwipe';
 import { useLiveSync } from '@/lib/useLiveSync';
+import { getYDoc } from '@/lib/ydoc';
 import { useNotesIndex } from '@/lib/useNotesIndex';
+import { useManualSave } from '@/lib/useManualSave';
+import { hasLegacyDayNoteContent, migrateLegacyDayNote } from '@/lib/mergeNoteContent';
 import TaskList from '@/components/tasks/TaskList';
 import Editor from '@/components/editor/Editor';
+import NotePickerSheet from '@/components/notes/NotePickerSheet';
 
-// از تقویم باز می‌شود (app/(main)/page.js) — یادداشت و کارهای همان یک روز.
-// سوایپ افقی هم مثل قبل بین روزها جابه‌جا می‌کند، فقط حالا با تغییر مسیر.
+const PLAIN_SNIPPET_LENGTH = 200;
+
+// از تقویم باز می‌شود (app/(main)/page.js) — کارها + یادداشتِ همان یک روز.
+// یادداشت یک نهاد یکتاست، نه دو نوع جدا: همین سند (note:{id}) هم از اینجا
+// هم از /notes/{id} ویرایش می‌شود؛ حداکثر یک یادداشت به هر روز وصل است
+// (بند ۳ + useNotesIndex.connectNoteToDay). سوایپ افقی بین روزها جابه‌جا
+// می‌کند، فقط حالا با تغییر مسیر.
 export default function DayPage() {
   const { dayKey } = useParams();
   const router = useRouter();
   const date = fromDayKey(dayKey);
   const holiday = getHoliday(dayKey);
-  useLiveSync(dayKey);
+  const dayStatus = useLiveSync(dayKey); // کارهای همین روز هنوز در سند خودِ روزند
 
-  // یادداشت آزادِ متصل به این روز (بند ۳: dayKey اختیاری) فقط یک برچسب روی
-  // سند مستقل خودش است، با سند این روز ادغام نمی‌شود — پس اینجا باید صریح
-  // لینکش را نشان بدهیم وگرنه از دید کاربر «گم» به نظر می‌رسد. kind !== 'daily'
-  // چون ورودی خودِ این روز هم در همین فهرست است و نباید به خودش لینک بدهد.
-  const { notes, setDailyNoteText } = useNotesIndex();
-  const linkedNotes = notes.filter((n) => n.dayKey === dayKey && n.kind !== 'daily');
+  const { notes, createNote, updateNoteMeta, connectNoteToDay } = useNotesIndex();
+  const note = notes.find((n) => n.dayKey === dayKey);
+  const noteDocId = note ? `note:${note.id}` : null;
+  useLiveSync(noteDocId, getYDoc);
 
-  // متن ادیتور همین روز هم در سند index کش می‌شود — دقیقاً همان الگویی که
-  // یادداشت آزاد و کارهای پین‌شده دارند — تا صفحهٔ یادداشت‌ها بدون باز کردن
-  // سند هر روز، یادداشت‌های روزانه را هم فهرست/جست‌وجو کند.
-  const handleTextChange = useCallback((text) => setDailyNoteText(dayKey, text), [dayKey, setDailyNoteText]);
+  // پیش از این معماری، هر روز سند مستقل خودش را برای یادداشت داشت — این
+  // فقط یک‌بار محتوای باقی‌مانده را به یک یادداشت واقعی منتقل می‌کند تا
+  // چیزی از دست نرود. باید صبر کند تا سند همان روز واقعاً از سرور بیاید
+  // (dayStatus === 'connected')، وگرنه سند محلیِ هنوز خالی را «بدون یادداشت»
+  // تشخیص می‌دهد و هیچ‌وقت واقعاً بررسی نمی‌کند.
+  useEffect(() => {
+    if (note || dayStatus !== 'connected') return;
+    if (!hasLegacyDayNoteContent(dayKey)) return;
+    const id = createNote(dayKey);
+    migrateLegacyDayNote(dayKey, `note:${id}`);
+  }, [dayKey, note, createNote, dayStatus]);
+
+  const handleTextChange = useCallback(
+    (text) => {
+      if (!note) return;
+      updateNoteMeta(note.id, { plain: text.trim().slice(0, PLAIN_SNIPPET_LENGTH) });
+    },
+    [note, updateNoteMeta],
+  );
+
+  const editorRef = useRef(null);
+  const { handleSave, toastOpen, closeToast } = useManualSave(editorRef);
+  const [notePickerOpen, setNotePickerOpen] = useState(false);
 
   const goToDay = (d) => router.push(`/day/${toDayKey(d)}`);
   const daySwipe = useSwipe({
     onSwipeLeft: () => goToDay(addDays(date, 1)),
     onSwipeRight: () => goToDay(addDays(date, -1)),
   });
+
+  const handleCreateNote = () => createNote(dayKey);
+  const handlePickNote = (pickedId) => {
+    connectNoteToDay(pickedId, dayKey);
+    setNotePickerOpen(false);
+  };
 
   return (
     <Box
@@ -62,7 +96,7 @@ export default function DayPage() {
         <IconButton onClick={() => router.push('/')} aria-label="بازگشت به تقویم" sx={{ width: 44, height: 44 }}>
           <ArrowForwardRoundedIcon />
         </IconButton>
-        <Box>
+        <Box sx={{ minWidth: 0 }}>
           <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
             {formatWeekdayLong(date)}، {formatDayNumber(date)} {formatMonthYear(date)}
           </Typography>
@@ -72,32 +106,60 @@ export default function DayPage() {
             </Typography>
           )}
         </Box>
+        <Box sx={{ flexGrow: 1 }} />
+        {note && (
+          <>
+            <IconButton onClick={handleSave} aria-label="ذخیره (Ctrl+S)" sx={{ width: 44, height: 44 }}>
+              <SaveRoundedIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              onClick={() => router.push(`/notes/${note.id}`)}
+              aria-label="باز کردن به‌عنوان یادداشت"
+              sx={{ width: 44, height: 44 }}
+            >
+              <OpenInNewRoundedIcon fontSize="small" />
+            </IconButton>
+          </>
+        )}
       </Box>
-
-      {linkedNotes.length > 0 && (
-        <Paper elevation={0} sx={{ overflow: 'hidden' }}>
-          {linkedNotes.map((note, i) => (
-            <Box key={note.id}>
-              {i > 0 && <Divider sx={{ borderColor: 'glass.border' }} />}
-              <ButtonBase
-                onClick={() => router.push(`/notes/${note.id}`)}
-                sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 1, textAlign: 'start', px: 2, minHeight: 52 }}
-              >
-                <StickyNote2RoundedIcon fontSize="small" sx={{ color: 'text.secondary', flexShrink: 0 }} />
-                <Typography noWrap sx={{ fontSize: '0.9rem' }}>
-                  {note.title || 'بی‌عنوان'}
-                </Typography>
-              </ButtonBase>
-            </Box>
-          ))}
-        </Paper>
-      )}
 
       <TaskList key={dayKey} dayKey={dayKey} />
 
-      <Box sx={{ flexGrow: 1 }}>
-        <Editor key={dayKey} docId={dayKey} onTextChange={handleTextChange} />
-      </Box>
+      {note ? (
+        <Box sx={{ flexGrow: 1 }}>
+          <Editor key={noteDocId} ref={editorRef} docId={noteDocId} getDoc={getYDoc} onTextChange={handleTextChange} />
+        </Box>
+      ) : (
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', px: 0.5 }}>
+          <Button size="small" startIcon={<NoteAddRoundedIcon />} onClick={handleCreateNote} variant="outlined">
+            یادداشت تازه
+          </Button>
+          <Button
+            size="small"
+            startIcon={<LinkRoundedIcon />}
+            onClick={() => setNotePickerOpen(true)}
+            sx={{ color: 'text.secondary' }}
+          >
+            وصل‌کردن یادداشت موجود
+          </Button>
+        </Box>
+      )}
+
+      <NotePickerSheet
+        open={notePickerOpen}
+        onOpen={() => setNotePickerOpen(true)}
+        onClose={() => setNotePickerOpen(false)}
+        onPick={handlePickNote}
+      />
+
+      <Snackbar
+        open={toastOpen}
+        onClose={closeToast}
+        autoHideDuration={1500}
+        message="ذخیره شد"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{ bottom: { xs: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' } }}
+      />
     </Box>
   );
 }

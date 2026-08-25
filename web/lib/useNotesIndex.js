@@ -4,25 +4,21 @@ import { useCallback, useSyncExternalStore } from 'react';
 import * as Y from 'yjs';
 import { getYDoc } from './ydoc';
 import { useLiveSync } from './useLiveSync';
+import { appendNoteContent } from './mergeNoteContent';
 
 const INDEX_DOC_ID = 'index';
 const PLAIN_SNIPPET_LENGTH = 200;
 
 // بند ۱۳.۳: «متادیتای فهرست‌ها در یک سند سبک جداگانه به‌نام index» — تا فهرست
-// یادداشت‌ها (روزانه + آزاد) و جست‌وجو بدون باز کردن سند هر یادداشت کار کنند.
-// هر عضو این Y.Map یک Y.Map دیگر است:
-// {id, kind: 'daily'|'free', title, plain, dayKey, updatedAt, deletedAt}.
-// یادداشت روزانه: id همان dayKey است، خودش را lazily از useDayNoteIndexSync
-// می‌سازد (اولین باری که متنی در سند آن روز نوشته شود).
-// یادداشت آزاد: dayKey طبق بند ۳ اختیاری است — می‌تواند به یک روز مشخص هم
-// وصل شود، بدون این‌که با سند خودِ آن روز یکی شود.
-// حذف طبق قاعدهٔ ۱ در CLAUDE.md فقط علامت‌گذاری (deletedAt) است — این فقط
-// دربارهٔ یادداشت آزاد صدق می‌کند؛ ورودی یادداشت روزانه یک کش مشتق‌شده از سند
-// خودِ آن روز است، نه دادهٔ اصلی، پس با خالی‌شدن متن به‌سادگی حذف می‌شود.
+// یادداشت‌ها و جست‌وجو بدون باز کردن سند هر یادداشت کار کنند.
+// یک یادداشت وجود دارد، نه دو نوع جدا — هر یادداشت سند مستقل خودش را دارد
+// (`note:{id}`) و اختیاری به یک روز وصل می‌شود (dayKey، بند ۳). حداکثر یک
+// یادداشت می‌تواند به یک روز وصل باشد — connectNoteToDay این را تضمین می‌کند.
+// هر عضو این Y.Map یک Y.Map دیگر است: {id, title, plain, dayKey, updatedAt, deletedAt}.
+// حذف طبق قاعدهٔ ۱ در CLAUDE.md فقط علامت‌گذاری (deletedAt) است، نه واقعاً حذف.
 function toPlainEntry(ymap) {
   return {
     id: ymap.get('id'),
-    kind: ymap.get('kind') ?? 'free',
     title: ymap.get('title'),
     plain: ymap.get('plain'),
     dayKey: ymap.get('dayKey') ?? null,
@@ -70,45 +66,19 @@ export function useNotesIndex() {
 
   const notes = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  const createNote = useCallback(() => {
-    const id = crypto.randomUUID();
-    const entry = new Y.Map();
-    const now = new Date().toISOString();
-    entry.set('id', id);
-    entry.set('kind', 'free');
-    entry.set('title', '');
-    entry.set('plain', '');
-    entry.set('dayKey', null);
-    entry.set('updatedAt', now);
-    entry.set('deletedAt', null);
-    ydoc.transact(() => notesMap.set(id, entry));
-    return id;
-  }, [ydoc, notesMap]);
-
-  // یادداشت روزانه ساخت صریح ندارد — همین که کاربر در ادیتور همان روز چیزی
-  // نوشت این ورودی lazily ساخته می‌شود؛ خالی‌شدن کامل متن یعنی دیگر لازم
-  // نیست در فهرست/جست‌وجو باشد.
-  const setDailyNoteText = useCallback(
-    (dayKey, text) => {
-      const trimmed = text.trim();
-      ydoc.transact(() => {
-        if (!trimmed) {
-          notesMap.delete(dayKey);
-          return;
-        }
-        let entry = notesMap.get(dayKey);
-        if (!entry) {
-          entry = new Y.Map();
-          entry.set('id', dayKey);
-          entry.set('kind', 'daily');
-          entry.set('dayKey', dayKey);
-          entry.set('title', '');
-          entry.set('deletedAt', null);
-          notesMap.set(dayKey, entry);
-        }
-        entry.set('plain', trimmed.slice(0, PLAIN_SNIPPET_LENGTH));
-        entry.set('updatedAt', new Date().toISOString());
-      });
+  const createNote = useCallback(
+    (dayKey = null) => {
+      const id = crypto.randomUUID();
+      const entry = new Y.Map();
+      const now = new Date().toISOString();
+      entry.set('id', id);
+      entry.set('title', '');
+      entry.set('plain', '');
+      entry.set('dayKey', dayKey);
+      entry.set('updatedAt', now);
+      entry.set('deletedAt', null);
+      ydoc.transact(() => notesMap.set(id, entry));
+      return id;
     },
     [ydoc, notesMap],
   );
@@ -136,5 +106,37 @@ export function useNotesIndex() {
     [ydoc, notesMap],
   );
 
-  return { notes, createNote, updateNoteMeta, deleteNote, setDailyNoteText };
+  // یک روز حداکثر یک یادداشت وصل دارد. اگر روز مقصد از قبل یادداشت دیگری
+  // داشت، به‌جای رد کردن یا جایگزینی، محتوای این یادداشت به آن اضافه می‌شود
+  // (چیزی از دست نرود) و خودش tombstone می‌شود؛ شناسهٔ یادداشتِ نهایی (باقی‌مانده
+  // روی آن روز) برگردانده می‌شود تا فراخوان بتواند مثلاً به آن ناوبری کند.
+  const connectNoteToDay = useCallback(
+    (noteId, dayKey) => {
+      const conflict = [...notesMap.values()]
+        .map(toPlainEntry)
+        .find((n) => n.dayKey === dayKey && n.id !== noteId && !n.deletedAt);
+
+      if (conflict) {
+        appendNoteContent(`note:${noteId}`, `note:${conflict.id}`);
+        ydoc.transact(() => {
+          const noteEntry = notesMap.get(noteId);
+          const targetEntry = notesMap.get(conflict.id);
+          const mergedPlain = [targetEntry?.get('plain'), noteEntry?.get('plain')]
+            .filter(Boolean)
+            .join(' ')
+            .slice(0, PLAIN_SNIPPET_LENGTH);
+          targetEntry?.set('plain', mergedPlain);
+          targetEntry?.set('updatedAt', new Date().toISOString());
+          noteEntry?.set('deletedAt', new Date().toISOString());
+        });
+        return conflict.id;
+      }
+
+      updateNoteMeta(noteId, { dayKey });
+      return noteId;
+    },
+    [ydoc, notesMap, updateNoteMeta],
+  );
+
+  return { notes, createNote, updateNoteMeta, deleteNote, connectNoteToDay };
 }

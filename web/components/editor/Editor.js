@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import Paper from '@mui/material/Paper';
 import StarterKit from '@tiptap/starter-kit';
@@ -29,12 +29,10 @@ const TEXT_CHANGE_DEBOUNCE_MS = 800;
 // همان سندی که کارهای همین روز هم در آن‌اند (بند ۱۳.۳).
 // getDoc پیش‌فرض getDayDoc است؛ فاز ۷ همین کامپوننت را با getYDoc برای
 // یادداشت آزاد هم استفاده می‌کند (docId وقتی آزاد است `note:{id}`).
-export default function Editor({
-  docId,
-  getDoc = getDayDoc,
-  placeholder = 'یادداشت این روز را بنویس…',
-  onTextChange,
-}) {
+const Editor = forwardRef(function Editor(
+  { docId, getDoc = getDayDoc, placeholder = 'یادداشت این روز را بنویس…', onTextChange },
+  ref,
+) {
   const { ydoc } = getDoc(docId);
   const [focused, setFocused] = useState(false);
   const { setFocused: setGlobalFocused } = useEditorFocus();
@@ -62,8 +60,8 @@ export default function Editor({
         setFocused(false);
         setGlobalFocused(false);
       },
-      // فقط وقتی استفاده می‌شود که والد onTextChange بدهد (فاز ۷: نوشتن خلاصهٔ
-      // متن ساده در سند index برای فهرست/جست‌وجو) — صفحهٔ روز چیزی نمی‌گیرد.
+      // فقط وقتی استفاده می‌شود که والد onTextChange بدهد — نوشتن خلاصهٔ متن
+      // ساده در سند index برای فهرست/جست‌وجو (هم صفحهٔ روز، هم یادداشت آزاد).
       onUpdate: onTextChange
         ? ({ editor: e }) => {
             clearTimeout(textChangeTimer.current);
@@ -72,6 +70,21 @@ export default function Editor({
         : undefined,
     },
     [docId, getDoc],
+  );
+
+  // خودِ محتوا همیشه فوری در Y.Doc نوشته می‌شود (بند ۱۳.۳) — «ذخیرهٔ دستی»
+  // چیزی را که قبلاً ذخیره نشده باشد ذخیره نمی‌کند، فقط منتظر debounce بالا
+  // نمی‌ماند: همان لحظه onTextChange را با متن فعلی صدا می‌زند.
+  useImperativeHandle(
+    ref,
+    () => ({
+      flushTextChange: () => {
+        if (!onTextChange || !editor) return;
+        clearTimeout(textChangeTimer.current);
+        onTextChange(editor.getText());
+      },
+    }),
+    [onTextChange, editor],
   );
 
   // با تعویض سند، key=docId این کامپوننت را می‌سازد و از نو می‌سازد بدون آنکه
@@ -166,4 +179,6 @@ export default function Editor({
       <TableControls editor={editor} />
     </Paper>
   );
-}
+});
+
+export default Editor;
