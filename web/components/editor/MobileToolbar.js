@@ -44,10 +44,12 @@ export default function MobileToolbar({ editor }) {
         position: 'fixed',
         insetInline: 0,
         bottom: offset,
-        zIndex: (theme) => theme.zIndex.appBar,
-        bgcolor: 'background.paper',
+        zIndex: (theme) => theme.zIndex.appBar + 1,
+        bgcolor: 'glass.bg',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         borderTop: '1px solid',
-        borderColor: 'divider',
+        borderColor: 'glass.border',
       }}
     >
       <Toolbar editor={editor} />

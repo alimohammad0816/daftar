@@ -10,6 +10,7 @@ import { NodeViewWrapper } from '@tiptap/react';
 import { useAttachmentUpload } from '@/lib/useAttachmentUpload';
 import { useAttachmentUrl } from '@/lib/useAttachmentUrl';
 import { toFa } from '@/lib/toFa';
+import { RADIUS_SM } from '@/theme/theme';
 
 function formatSize(bytes) {
   if (bytes < 1024) return `${toFa(bytes)} بایت`;
@@ -34,7 +35,7 @@ export default function FileAttachmentView({ node, updateAttributes }) {
           my: 1,
           border: '1px solid',
           borderColor: 'divider',
-          borderRadius: 2,
+          borderRadius: `${RADIUS_SM}px`,
           maxWidth: 360,
         }}
       >

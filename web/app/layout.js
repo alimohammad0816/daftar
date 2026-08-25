@@ -2,6 +2,7 @@ import localFont from 'next/font/local';
 import ThemeRegistry from '@/theme/ThemeRegistry';
 import { SessionProvider } from '@/lib/SessionContext';
 import AuthGate from '@/components/auth/AuthGate';
+import AppBackground from '@/components/layout/AppBackground';
 import './globals.css';
 
 const vazirmatn = localFont({
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
     <html lang="fa" dir="rtl" className={vazirmatn.variable} suppressHydrationWarning>
       <body>
         <ThemeRegistry>
+          <AppBackground />
           <SessionProvider>
             <AuthGate>{children}</AuthGate>
           </SessionProvider>

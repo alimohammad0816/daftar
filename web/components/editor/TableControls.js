@@ -8,6 +8,7 @@ import Divider from '@mui/material/Divider';
 import AddRounded from '@mui/icons-material/AddRounded';
 import DeleteRounded from '@mui/icons-material/DeleteRounded';
 import DeleteForeverRounded from '@mui/icons-material/DeleteForeverRounded';
+import { RADIUS_SM } from '@/theme/theme';
 
 // بند ۴: «کنترل‌های افزودن/حذف سطر و ستون را به‌جای منوی شناور، در یک
 // BottomSheet بگذار که با انتخاب جدول باز شود» — روی موبایل منوی شناور را
@@ -28,7 +29,17 @@ export default function TableControls({ editor }) {
       variant="persistent"
       open={!!inTable}
       ModalProps={{ keepMounted: true }}
-      slotProps={{ paper: { sx: { border: 'none', borderTop: '1px solid', borderColor: 'divider' } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            border: 'none',
+            borderTop: '1px solid',
+            borderColor: 'glass.border',
+            borderTopLeftRadius: RADIUS_SM,
+            borderTopRightRadius: RADIUS_SM,
+          },
+        },
+      }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflowX: 'auto', px: 1.5, py: 1 }}>
         <Button size="small" startIcon={<AddRounded />} onClick={run(() => editor.chain().addRowBefore())} sx={{ minHeight: 44, flexShrink: 0 }}>

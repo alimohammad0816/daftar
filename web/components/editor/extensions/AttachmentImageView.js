@@ -5,6 +5,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useAttachmentUpload } from '@/lib/useAttachmentUpload';
 import { useAttachmentUrl } from '@/lib/useAttachmentUrl';
+import { RADIUS_SM } from '@/theme/theme';
 
 export default function AttachmentImageView({ node, updateAttributes }) {
   const { hash, width, height, status, alt } = node.attrs;
@@ -20,7 +21,7 @@ export default function AttachmentImageView({ node, updateAttributes }) {
           width: width || 320,
           aspectRatio: width && height ? `${width} / ${height}` : '4 / 3',
           bgcolor: 'action.hover',
-          borderRadius: 2,
+          borderRadius: `${RADIUS_SM}px`,
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',

@@ -1,6 +1,7 @@
 'use client';
 
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import CircularProgress from '@mui/material/CircularProgress';
 import { STAGE, useSession } from '@/lib/SessionContext';
 import LoginForm from './LoginForm';
@@ -21,9 +22,9 @@ export default function AuthGate({ children }) {
   if (stage !== STAGE.LOGGED_IN) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', p: 2 }}>
-        <Box sx={{ width: '100%', maxWidth: 360 }}>
+        <Paper elevation={0} sx={{ width: '100%', maxWidth: 380, p: { xs: 3, sm: 4 } }}>
           <LoginForm />
-        </Box>
+        </Paper>
       </Box>
     );
   }

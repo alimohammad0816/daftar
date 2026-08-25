@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import ButtonBase from '@mui/material/ButtonBase';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
@@ -29,10 +30,10 @@ export default function TaskList({ dayKey }) {
   const doneCount = tasks.filter((t) => t.done).length;
 
   return (
-    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+    <Paper elevation={0} sx={{ overflow: 'hidden' }}>
       <ButtonBase
         onClick={() => setOpen((v) => !v)}
-        sx={{ width: '100%', minHeight: 44, px: 1.5, py: 1, justifyContent: 'space-between' }}
+        sx={{ width: '100%', minHeight: 52, px: 2, py: 1, justifyContent: 'space-between' }}
       >
         <Typography sx={{ fontWeight: 700 }}>کارها</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -47,7 +48,7 @@ export default function TaskList({ dayKey }) {
       </ButtonBase>
 
       <Collapse in={open}>
-        <Divider />
+        <Divider sx={{ borderColor: 'glass.border' }} />
         <Box sx={{ py: 0.5 }}>
           {tasks.map((task, i) => (
             <TaskItem
@@ -61,10 +62,10 @@ export default function TaskList({ dayKey }) {
               canMoveDown={i < tasks.length - 1}
             />
           ))}
-          <Divider />
+          <Divider sx={{ borderColor: 'glass.border' }} />
           <TaskInput onAdd={addTask} />
         </Box>
       </Collapse>
-    </Box>
+    </Paper>
   );
 }

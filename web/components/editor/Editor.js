@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import Paper from '@mui/material/Paper';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -10,6 +11,8 @@ import { TableKit } from '@tiptap/extension-table';
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import Box from '@mui/material/Box';
 import { getDayDoc } from '@/lib/ydoc';
+import { useEditorFocus } from '@/lib/EditorFocusContext';
+import { RADIUS_SM } from '@/theme/theme';
 import { Direction } from './extensions/Direction';
 import { AttachmentImage } from './extensions/AttachmentImage';
 import { FileAttachment } from './extensions/FileAttachment';
@@ -25,6 +28,7 @@ import TableControls from './TableControls';
 export default function Editor({ dayKey }) {
   const { ydoc } = getDayDoc(dayKey);
   const [focused, setFocused] = useState(false);
+  const { setFocused: setGlobalFocused } = useEditorFocus();
 
   const editor = useEditor(
     {
@@ -40,23 +44,36 @@ export default function Editor({ dayKey }) {
         AttachmentImage,
         FileAttachment,
       ],
-      onFocus: () => setFocused(true),
-      onBlur: () => setFocused(false),
+      onFocus: () => {
+        setFocused(true);
+        setGlobalFocused(true);
+      },
+      onBlur: () => {
+        setFocused(false);
+        setGlobalFocused(false);
+      },
     },
     [dayKey],
   );
 
+  // با تعویض روز، key=dayKey این کامپوننت را می‌سازد و از نو می‌سازد بدون آنکه
+  // onBlur ادیتور قبلی فرصت اجرا پیدا کند — بدون این پاک‌سازی، IslandNav
+  // می‌تواند برای همیشه پنهان بماند.
+  useEffect(() => () => setGlobalFocused(false), [setGlobalFocused]);
+
   if (!editor) return null;
 
   return (
-    <Box>
-      <Box sx={{ display: { xs: 'none', sm: 'block' }, borderBottom: '1px solid', borderColor: 'divider' }}>
+    <Paper elevation={0} sx={{ overflow: 'hidden' }}>
+      <Box sx={{ display: { xs: 'none', sm: 'block' }, borderBottom: '1px solid', borderColor: 'glass.border' }}>
         <Toolbar editor={editor} />
       </Box>
 
       <Box
         sx={{
-          pb: { xs: focused ? 8 : 0, sm: 0 },
+          px: { xs: 1.5, sm: 2 },
+          pb: { xs: focused ? 8 : 1.5, sm: 1.5 },
+          pt: 1,
           '& .ProseMirror': {
             minHeight: 160,
             outline: 'none',
@@ -87,7 +104,7 @@ export default function Editor({ dayKey }) {
             color: 'text.primary',
             p: 1.5,
             my: 1,
-            borderRadius: 2,
+            borderRadius: `${RADIUS_SM}px`,
             overflowX: 'auto',
           },
           '& .ProseMirror pre code': { fontFamily: 'inherit', whiteSpace: 'pre' },
@@ -128,6 +145,6 @@ export default function Editor({ dayKey }) {
 
       {focused && <MobileToolbar editor={editor} />}
       <TableControls editor={editor} />
-    </Box>
+    </Paper>
   );
 }

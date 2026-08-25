@@ -12,21 +12,19 @@ export default function MonthGrid({ viewDate, selectedDate, onSelectDay, onViewD
   const weeks = getMonthGrid(viewDate);
 
   return (
-    <Box sx={{ p: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+    <Box sx={{ p: { xs: 1, sm: 1.5 } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: { xs: 1.5, sm: 2.5 } }}>
         <IconButton
-          size="small"
           onClick={() => onViewDateChange(addMonths(viewDate, -1))}
           aria-label="ماه قبل"
           sx={{ width: 44, height: 44 }}
         >
           <ChevronRightRoundedIcon />
         </IconButton>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800 }}>
           {formatMonthYear(viewDate)}
         </Typography>
         <IconButton
-          size="small"
           onClick={() => onViewDateChange(addMonths(viewDate, 1))}
           aria-label="ماه بعد"
           sx={{ width: 44, height: 44 }}
@@ -35,9 +33,9 @@ export default function MonthGrid({ viewDate, selectedDate, onSelectDay, onViewD
         </IconButton>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', justifyItems: 'center', mb: 0.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', justifyItems: 'center', mb: 1 }}>
         {WEEKDAY_SHORT.map((label, i) => (
-          <Typography key={i} variant="caption" color="text.secondary">
+          <Typography key={i} variant="body2" sx={{ fontWeight: 600 }} color="text.secondary">
             {label}
           </Typography>
         ))}
@@ -46,14 +44,14 @@ export default function MonthGrid({ viewDate, selectedDate, onSelectDay, onViewD
       {weeks.map((week, wi) => (
         <Box
           key={wi}
-          sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', justifyItems: 'center', mb: 0.5 }}
+          sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', justifyItems: 'center', mb: { xs: 0.5, sm: 1 } }}
         >
           {week.map(({ date, inMonth }) => (
             <DayCell
               key={toDayKey(date)}
               date={date}
               inMonth={inMonth}
-              selected={toDayKey(date) === toDayKey(selectedDate)}
+              selected={!!selectedDate && toDayKey(date) === toDayKey(selectedDate)}
               onSelect={onSelectDay}
             />
           ))}
