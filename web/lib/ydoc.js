@@ -10,15 +10,25 @@ import { IndexeddbPersistence } from 'y-indexeddb';
 
 const cache = new Map();
 
-export function getDayDoc(dayKey) {
-  let entry = cache.get(dayKey);
+function getOrCreate(cacheKey, idbName) {
+  let entry = cache.get(cacheKey);
   if (entry) return entry;
 
   const ydoc = new Y.Doc();
   // IndexedDB فقط سمت کلاینت وجود دارد؛ روی سرور (SSR) سند فقط در حافظه می‌ماند.
-  const provider = typeof window !== 'undefined' ? new IndexeddbPersistence(`daftar:day:${dayKey}`, ydoc) : null;
+  const provider = typeof window !== 'undefined' ? new IndexeddbPersistence(idbName, ydoc) : null;
 
   entry = { ydoc, provider };
-  cache.set(dayKey, entry);
+  cache.set(cacheKey, entry);
   return entry;
+}
+
+export function getDayDoc(dayKey) {
+  return getOrCreate(dayKey, `daftar:day:${dayKey}`);
+}
+
+// فاز ۷: سند مستقلِ هر یادداشت آزاد (`note:{id}`) و سند فهرست مشترک (`index`)
+// از همین کش عبور می‌کنند، فقط با نام‌گذاری متفاوت — بند ۱۳.۳.
+export function getYDoc(docId) {
+  return getOrCreate(docId, `daftar:${docId}`);
 }

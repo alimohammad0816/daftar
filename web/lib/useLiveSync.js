@@ -4,16 +4,17 @@ import { useEffect, useState } from 'react';
 import { getDayDoc } from './ydoc';
 import { SyncProvider } from './SyncProvider';
 
-// یک SyncProvider برای هر روز، هم‌عمر با Y.Doc همان روز (lib/ydoc.js) — تعویض
-// روز، پرووایدر قبلی را pause می‌کند نه destroy، دقیقاً مثل کش خود ydoc.
+// یک SyncProvider برای هر docId، هم‌عمر با Y.Doc همان سند (lib/ydoc.js) —
+// تعویض سند، پرووایدر قبلی را pause می‌کند نه destroy، دقیقاً مثل کش خود ydoc.
+// این کش با getDoc فرقی نمی‌کند چون docId خودش (روز/note:{id}/index) یکتاست.
 const providerCache = new Map();
 
-function getProvider(dayKey) {
-  let provider = providerCache.get(dayKey);
+function getProvider(docId, getDoc) {
+  let provider = providerCache.get(docId);
   if (!provider) {
-    const { ydoc } = getDayDoc(dayKey);
-    provider = new SyncProvider(dayKey, ydoc);
-    providerCache.set(dayKey, provider);
+    const { ydoc } = getDoc(docId);
+    provider = new SyncProvider(docId, ydoc);
+    providerCache.set(docId, provider);
   }
   return provider;
 }
@@ -22,11 +23,13 @@ function getProvider(dayKey) {
 // اینجا دیگر نیازی به بررسی جداگانهٔ نشست نیست، فقط اتصال زنده در پیش‌زمینه
 // (بند ۱۳.۵ مورد ۳: قطع در visibilitychange، همگام‌سازی کامل هنگام بازگشت).
 // وضعیت‌های ممکن: connecting | connected | disconnected | error | paused
-export function useLiveSync(dayKey) {
+// getDoc پیش‌فرض getDayDoc است (سند روزانه)؛ فاز ۷ با getYDoc همین هوک را
+// برای سند یادداشت آزاد و سند index هم استفاده می‌کند.
+export function useLiveSync(docId, getDoc = getDayDoc) {
   const [status, setStatus] = useState('connecting');
 
   useEffect(() => {
-    const provider = getProvider(dayKey);
+    const provider = getProvider(docId, getDoc);
     const unsubscribe = provider.onStatus(setStatus);
 
     const handleVisibility = () => {
@@ -41,7 +44,7 @@ export function useLiveSync(dayKey) {
       unsubscribe();
       provider.pause();
     };
-  }, [dayKey]);
+  }, [docId, getDoc]);
 
   return status;
 }

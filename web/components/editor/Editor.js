@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import Paper from '@mui/material/Paper';
 import StarterKit from '@tiptap/starter-kit';
@@ -21,14 +21,24 @@ import Toolbar from './Toolbar';
 import MobileToolbar from './MobileToolbar';
 import TableControls from './TableControls';
 
+const TEXT_CHANGE_DEBOUNCE_MS = 800;
+
 // «autosave» بند ۹ دیگر یک تایمر جداگانه نیست: Collaboration هر تراکنش را
 // مستقیم در ydoc.getXmlFragment('note') می‌نویسد و IndexeddbPersistence
 // (lib/ydoc.js) خودش با debounce داخلی‌اش روی دیسک نگه می‌دارد — دقیقاً
 // همان سندی که کارهای همین روز هم در آن‌اند (بند ۱۳.۳).
-export default function Editor({ dayKey }) {
-  const { ydoc } = getDayDoc(dayKey);
+// getDoc پیش‌فرض getDayDoc است؛ فاز ۷ همین کامپوننت را با getYDoc برای
+// یادداشت آزاد هم استفاده می‌کند (docId وقتی آزاد است `note:{id}`).
+export default function Editor({
+  docId,
+  getDoc = getDayDoc,
+  placeholder = 'یادداشت این روز را بنویس…',
+  onTextChange,
+}) {
+  const { ydoc } = getDoc(docId);
   const [focused, setFocused] = useState(false);
   const { setFocused: setGlobalFocused } = useEditorFocus();
+  const textChangeTimer = useRef(null);
 
   const editor = useEditor(
     {
@@ -37,7 +47,7 @@ export default function Editor({ dayKey }) {
         StarterKit.configure({ undoRedo: false, codeBlock: false }),
         Highlight,
         Direction,
-        Placeholder.configure({ placeholder: 'یادداشت این روز را بنویس…' }),
+        Placeholder.configure({ placeholder }),
         Collaboration.configure({ document: ydoc, field: 'note' }),
         CodeBlockLowlight.configure({ lowlight }),
         TableKit.configure({ table: { resizable: false } }),
@@ -52,14 +62,23 @@ export default function Editor({ dayKey }) {
         setFocused(false);
         setGlobalFocused(false);
       },
+      // فقط وقتی استفاده می‌شود که والد onTextChange بدهد (فاز ۷: نوشتن خلاصهٔ
+      // متن ساده در سند index برای فهرست/جست‌وجو) — صفحهٔ روز چیزی نمی‌گیرد.
+      onUpdate: onTextChange
+        ? ({ editor: e }) => {
+            clearTimeout(textChangeTimer.current);
+            textChangeTimer.current = setTimeout(() => onTextChange(e.getText()), TEXT_CHANGE_DEBOUNCE_MS);
+          }
+        : undefined,
     },
-    [dayKey],
+    [docId, getDoc],
   );
 
-  // با تعویض روز، key=dayKey این کامپوننت را می‌سازد و از نو می‌سازد بدون آنکه
+  // با تعویض سند، key=docId این کامپوننت را می‌سازد و از نو می‌سازد بدون آنکه
   // onBlur ادیتور قبلی فرصت اجرا پیدا کند — بدون این پاک‌سازی، IslandNav
   // می‌تواند برای همیشه پنهان بماند.
   useEffect(() => () => setGlobalFocused(false), [setGlobalFocused]);
+  useEffect(() => () => clearTimeout(textChangeTimer.current), []);
 
   if (!editor) return null;
 

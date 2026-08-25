@@ -48,7 +48,7 @@ export default function DayPage() {
       <TaskList key={dayKey} dayKey={dayKey} />
 
       <Box sx={{ flexGrow: 1 }}>
-        <Editor key={dayKey} dayKey={dayKey} />
+        <Editor key={dayKey} docId={dayKey} />
       </Box>
     </Box>
   );
