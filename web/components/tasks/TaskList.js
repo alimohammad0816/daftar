@@ -16,7 +16,7 @@ import TaskInput from './TaskInput';
 // بند ۲ در PLAN.md: جمع‌شونده، پیش‌فرض باز اگر کار انجام‌نشده دارد. این حالت
 // فقط یک‌بار — همان اولین باری که داده واقعاً بارگذاری شد — تعیین می‌شود؛
 // وگرنه با هر تغییر کارها، وضعیت باز/بسته‌ای که کاربر دستی انتخاب کرده دوباره می‌پرد.
-export default function TaskList({ dayKey }) {
+export default function TaskList({ dayKey, title = 'کارها' }) {
   const { tasks, addTask, toggleTask, toggleRollover, removeTask, moveTask } = useDayTasks(dayKey);
   const [open, setOpen] = useState(true);
   const autoSet = useRef(false);
@@ -35,8 +35,10 @@ export default function TaskList({ dayKey }) {
         onClick={() => setOpen((v) => !v)}
         sx={{ width: '100%', minHeight: 52, px: 2, py: 1, justifyContent: 'space-between' }}
       >
-        <Typography sx={{ fontWeight: 700 }}>کارها</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Typography noWrap sx={{ fontWeight: 700, minWidth: 0 }}>
+          {title}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, pl: 1 }}>
           <Typography variant="body2" color="text.secondary">
             {toFa(doneCount)}/{toFa(tasks.length)}
           </Typography>

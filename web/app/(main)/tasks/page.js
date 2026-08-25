@@ -6,7 +6,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Checkbox from '@mui/material/Checkbox';
 import Divider from '@mui/material/Divider';
-import { toDayKey, today, fromDayKey, formatDayNumber, formatMonthYear } from '@/lib/jalali';
+import { toDayKey, today, fromDayKey, formatDayNumber, formatMonthYear, formatWeekdayLong } from '@/lib/jalali';
 import { useLiveSync } from '@/lib/useLiveSync';
 import { useRollingTasks } from '@/lib/useRollingTasks';
 import { toggleDayTask } from '@/lib/useDayTasks';
@@ -23,6 +23,10 @@ function DaySyncKeeper({ dayKey }) {
 // گفته تا انجام نشدند همچنان دیده شوند — نه همهٔ کارهای ناتمام همهٔ تاریخ.
 export default function TasksPage() {
   const todayKey = useMemo(() => toDayKey(today()), []);
+  const todayLabel = useMemo(() => {
+    const d = today();
+    return `${formatWeekdayLong(d)}، ${formatDayNumber(d)} ${formatMonthYear(d)}`;
+  }, []);
   const rolling = useRollingTasks();
   const rollingFromPast = rolling.filter((t) => t.dayKey !== todayKey);
   const uniqueDayKeys = [...new Set(rollingFromPast.map((t) => t.dayKey))];
@@ -33,7 +37,7 @@ export default function TasksPage() {
         <DaySyncKeeper key={dayKey} dayKey={dayKey} />
       ))}
 
-      <TaskList key={todayKey} dayKey={todayKey} />
+      <TaskList key={todayKey} dayKey={todayKey} title={todayLabel} />
 
       {rollingFromPast.length > 0 && (
         <Box>
