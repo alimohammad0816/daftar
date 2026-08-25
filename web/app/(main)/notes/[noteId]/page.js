@@ -1,16 +1,21 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
+import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import { getYDoc } from '@/lib/ydoc';
 import { useLiveSync } from '@/lib/useLiveSync';
 import { useNotesIndex } from '@/lib/useNotesIndex';
+import { fromDayKey, toDayKey, formatDayNumber, formatMonthYear } from '@/lib/jalali';
 import Editor from '@/components/editor/Editor';
+import DayPickerSheet from '@/components/notes/DayPickerSheet';
 
 const PLAIN_SNIPPET_LENGTH = 200;
 
@@ -25,6 +30,7 @@ export default function FreeNotePage() {
 
   const { notes, updateNoteMeta, deleteNote } = useNotesIndex();
   const entry = notes.find((n) => n.id === noteId);
+  const [dayPickerOpen, setDayPickerOpen] = useState(false);
 
   const handleTextChange = useCallback(
     (text) => {
@@ -55,6 +61,35 @@ export default function FreeNotePage() {
           <DeleteOutlineRoundedIcon />
         </IconButton>
       </Box>
+
+      <Box sx={{ px: 0.5 }}>
+        {entry?.dayKey ? (
+          <Chip
+            icon={<EventRoundedIcon />}
+            label={`${formatDayNumber(fromDayKey(entry.dayKey))} ${formatMonthYear(fromDayKey(entry.dayKey))}`}
+            onClick={() => setDayPickerOpen(true)}
+            onDelete={() => updateNoteMeta(noteId, { dayKey: null })}
+            sx={{ height: 36 }}
+          />
+        ) : (
+          <Button
+            size="small"
+            startIcon={<EventRoundedIcon />}
+            onClick={() => setDayPickerOpen(true)}
+            sx={{ color: 'text.secondary' }}
+          >
+            اختصاص به یک روز
+          </Button>
+        )}
+      </Box>
+
+      <DayPickerSheet
+        open={dayPickerOpen}
+        onOpen={() => setDayPickerOpen(true)}
+        onClose={() => setDayPickerOpen(false)}
+        selectedDate={entry?.dayKey ? fromDayKey(entry.dayKey) : null}
+        onSelectDay={(date) => updateNoteMeta(noteId, { dayKey: toDayKey(date) })}
+      />
 
       <Box sx={{ flexGrow: 1 }}>
         <Editor

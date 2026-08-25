@@ -33,12 +33,7 @@ export default function TasksPage() {
         <DaySyncKeeper key={dayKey} dayKey={dayKey} />
       ))}
 
-      <Box>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ px: 0.5, mb: 1 }}>
-          امروز
-        </Typography>
-        <TaskList key={todayKey} dayKey={todayKey} />
-      </Box>
+      <TaskList key={todayKey} dayKey={todayKey} />
 
       {rollingFromPast.length > 0 && (
         <Box>

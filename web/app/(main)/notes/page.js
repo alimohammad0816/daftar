@@ -12,7 +12,8 @@ import Divider from '@mui/material/Divider';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import StickyNote2RoundedIcon from '@mui/icons-material/StickyNote2Rounded';
-import { formatDayNumber, formatMonthYear } from '@/lib/jalali';
+import EventRoundedIcon from '@mui/icons-material/EventRounded';
+import { formatDayNumber, formatMonthYear, fromDayKey } from '@/lib/jalali';
 import { useNotesIndex } from '@/lib/useNotesIndex';
 
 // فاز ۷ (نسخهٔ اولیه، بدون تگ): فهرست یادداشت‌های آزاد + جست‌وجوی سمت کلاینت
@@ -57,7 +58,7 @@ export default function NotesPage() {
       ) : (
         <Paper elevation={0} sx={{ overflow: 'hidden' }}>
           {filtered.map((note, i) => {
-            const date = new Date(note.updatedAt);
+            const date = note.dayKey ? fromDayKey(note.dayKey) : new Date(note.updatedAt);
             return (
               <Box key={note.id}>
                 {i > 0 && <Divider sx={{ borderColor: 'glass.border' }} />}
@@ -68,7 +69,8 @@ export default function NotesPage() {
                   <Typography sx={{ fontWeight: 700 }} noWrap>
                     {note.title || 'بی‌عنوان'}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                    {note.dayKey && <EventRoundedIcon sx={{ fontSize: 14, color: 'text.secondary' }} />}
                     <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
                       {formatDayNumber(date)} {formatMonthYear(date)}
                     </Typography>

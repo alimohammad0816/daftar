@@ -9,13 +9,16 @@ const INDEX_DOC_ID = 'index';
 
 // بند ۱۳.۳: «متادیتای فهرست‌ها در یک سند سبک جداگانه به‌نام index» — تا فهرست
 // یادداشت‌های آزاد و جست‌وجو بدون باز کردن سند هر یادداشت کار کنند. هر عضو
-// این Y.Map یک Y.Map دیگر است: {id, title, plain, updatedAt, deletedAt}.
+// این Y.Map یک Y.Map دیگر است: {id, title, plain, dayKey, updatedAt, deletedAt}.
+// dayKey طبق بند ۳ اختیاری است — یادداشت آزاد می‌تواند به یک روز مشخص هم
+// وصل شود، بدون این‌که با یادداشت خودِ آن روز یکی شود.
 // حذف طبق قاعدهٔ ۱ در CLAUDE.md فقط علامت‌گذاری (deletedAt) است، نه واقعاً حذف.
 function toPlainEntry(ymap) {
   return {
     id: ymap.get('id'),
     title: ymap.get('title'),
     plain: ymap.get('plain'),
+    dayKey: ymap.get('dayKey') ?? null,
     updatedAt: ymap.get('updatedAt'),
     deletedAt: ymap.get('deletedAt'),
   };
@@ -67,6 +70,7 @@ export function useNotesIndex() {
     entry.set('id', id);
     entry.set('title', '');
     entry.set('plain', '');
+    entry.set('dayKey', null);
     entry.set('updatedAt', now);
     entry.set('deletedAt', null);
     ydoc.transact(() => notesMap.set(id, entry));
