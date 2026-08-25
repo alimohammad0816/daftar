@@ -17,7 +17,7 @@ import TaskInput from './TaskInput';
 // فقط یک‌بار — همان اولین باری که داده واقعاً بارگذاری شد — تعیین می‌شود؛
 // وگرنه با هر تغییر کارها، وضعیت باز/بسته‌ای که کاربر دستی انتخاب کرده دوباره می‌پرد.
 export default function TaskList({ dayKey }) {
-  const { tasks, addTask, toggleTask, removeTask, moveTask } = useDayTasks(dayKey);
+  const { tasks, addTask, toggleTask, toggleRollover, removeTask, moveTask } = useDayTasks(dayKey);
   const [open, setOpen] = useState(true);
   const autoSet = useRef(false);
 
@@ -55,6 +55,7 @@ export default function TaskList({ dayKey }) {
               key={task.id}
               task={task}
               onToggle={toggleTask}
+              onToggleRollover={toggleRollover}
               onRemove={removeTask}
               onMoveUp={(id) => moveTask(id, -1)}
               onMoveDown={(id) => moveTask(id, 1)}

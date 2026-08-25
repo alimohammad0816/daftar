@@ -6,11 +6,7 @@ import AppearancePanel from '@/components/settings/AppearancePanel';
 
 export default function SettingsPage() {
   return (
-    <Box sx={{ pt: { xs: 1.5, sm: 2.5 }, display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 560, mx: 'auto' }}>
-      <Typography variant="h5" component="h2" sx={{ fontWeight: 700, px: 0.5 }}>
-        تنظیمات
-      </Typography>
-
+    <Box sx={{ pt: { xs: 1.5, sm: 2.5 }, width: '100%', maxWidth: 640, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3 } }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
           ظاهر

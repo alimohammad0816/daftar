@@ -34,17 +34,8 @@ export default function NotesPage() {
   };
 
   return (
-    <Box sx={{ pt: { xs: 1.5, sm: 2.5 }, maxWidth: 640, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 0.5 }}>
-        <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
-          یادداشت‌ها
-        </Typography>
-        <IconButton onClick={handleCreate} aria-label="یادداشت تازه" sx={{ width: 44, height: 44 }}>
-          <AddRoundedIcon />
-        </IconButton>
-      </Box>
-
-      <Paper elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, minHeight: 52 }}>
+    <Box sx={{ pt: { xs: 1.5, sm: 2.5 }, width: '100%', maxWidth: 640, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Paper elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 1, pr: 2, minHeight: 52 }}>
         <SearchRoundedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
         <InputBase
           value={query}
@@ -53,6 +44,9 @@ export default function NotesPage() {
           fullWidth
           sx={{ fontSize: '0.9rem' }}
         />
+        <IconButton onClick={handleCreate} aria-label="یادداشت تازه" sx={{ width: 44, height: 44 }}>
+          <AddRoundedIcon />
+        </IconButton>
       </Paper>
 
       {filtered.length === 0 ? (

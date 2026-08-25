@@ -28,7 +28,18 @@ export default function DayPage() {
   });
 
   return (
-    <Box {...daySwipe} sx={{ touchAction: 'pan-y', display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 720, mx: 'auto' }}>
+    <Box
+      {...daySwipe}
+      sx={{
+        touchAction: 'pan-y',
+        width: '100%',
+        maxWidth: 720,
+        mx: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+      }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <IconButton onClick={() => router.push('/')} aria-label="بازگشت به تقویم" sx={{ width: 44, height: 44 }}>
           <ArrowForwardRoundedIcon />

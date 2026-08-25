@@ -2,7 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 import * as Y from 'yjs';
-import { getDayDoc } from './ydoc';
+import { getDayDoc, getYDoc } from './ydoc';
 
 function toPlainTask(ymap) {
   return {
@@ -26,6 +26,48 @@ function computeSnapshot(tasksArray) {
   const snapshot = tasksArray.toArray().map(toPlainTask);
   snapshotCache.set(tasksArray, snapshot);
   return snapshot;
+}
+
+// «صفحهٔ کارها» (فاز جانبی بعد از فاز ۷) یک کش سبک از کارهای بازِ rollover=true
+// را در همان سند مشترک index (بند ۱۳.۳) نگه می‌دارد تا بدون باز کردن سند هر
+// روز بشود کارهای «باید امروز هم دیده شوند» را از همهٔ روزهای گذشته جمع زد.
+// خودِ کاربر تصمیم می‌گیرد کدام کار rollover بگیرد (نه خودکار برای همه) —
+// چون بعضی کارها فقط مخصوص همان یک روزند.
+function syncRollingEntry(dayKey, task) {
+  const { ydoc: indexDoc } = getYDoc('index');
+  const rollingMap = indexDoc.getMap('rollingTasks');
+  const id = task.get('id');
+  indexDoc.transact(() => {
+    if (task.get('rollover') && !task.get('done')) {
+      let entry = rollingMap.get(id);
+      if (!entry) {
+        entry = new Y.Map();
+        rollingMap.set(id, entry);
+      }
+      entry.set('id', id);
+      entry.set('dayKey', dayKey);
+      entry.set('title', task.get('title'));
+    } else {
+      rollingMap.delete(id);
+    }
+  });
+}
+
+// نسخهٔ غیر-هوکی toggle، برای صفحهٔ «کارها» که باید کار متعلق به روزهای دیگر
+// را هم بدون صدا زدن useDayTasks(dayKey) به ازای هر روز (که قانون هوک‌ها را
+// می‌شکند) تیک بزند.
+export function toggleDayTask(dayKey, id) {
+  const { ydoc } = getDayDoc(dayKey);
+  const tasksArray = ydoc.getArray('tasks');
+  ydoc.transact(() => {
+    const idx = tasksArray.toArray().findIndex((t) => t.get('id') === id);
+    if (idx === -1) return;
+    const task = tasksArray.get(idx);
+    const done = !task.get('done');
+    task.set('done', done);
+    task.set('doneAt', done ? new Date().toISOString() : null);
+    syncRollingEntry(dayKey, task);
+  });
 }
 
 // کارهای یک روز، از ydoc.getArray('tasks') همان سند روزانه — بند ۱۳.۳.
@@ -74,18 +116,19 @@ export function useDayTasks(dayKey) {
     [ydoc, tasksArray],
   );
 
-  const toggleTask = useCallback(
+  const toggleTask = useCallback((id) => toggleDayTask(dayKey, id), [dayKey]);
+
+  const toggleRollover = useCallback(
     (id) => {
       ydoc.transact(() => {
         const idx = tasksArray.toArray().findIndex((t) => t.get('id') === id);
         if (idx === -1) return;
         const task = tasksArray.get(idx);
-        const done = !task.get('done');
-        task.set('done', done);
-        task.set('doneAt', done ? new Date().toISOString() : null);
+        task.set('rollover', !task.get('rollover'));
+        syncRollingEntry(dayKey, task);
       });
     },
-    [ydoc, tasksArray],
+    [ydoc, tasksArray, dayKey],
   );
 
   const removeTask = useCallback(
@@ -94,6 +137,8 @@ export function useDayTasks(dayKey) {
         const idx = tasksArray.toArray().findIndex((t) => t.get('id') === id);
         if (idx !== -1) tasksArray.delete(idx, 1);
       });
+      const { ydoc: indexDoc } = getYDoc('index');
+      indexDoc.transact(() => indexDoc.getMap('rollingTasks').delete(id));
     },
     [ydoc, tasksArray],
   );
@@ -118,5 +163,5 @@ export function useDayTasks(dayKey) {
     [ydoc, tasksArray],
   );
 
-  return { tasks, addTask, toggleTask, removeTask, moveTask };
+  return { tasks, addTask, toggleTask, toggleRollover, removeTask, moveTask };
 }
