@@ -8,6 +8,9 @@ import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import { DndContext, PointerSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { toFa } from '@/lib/toFa';
 import { useDayTasks } from '@/lib/useDayTasks';
 import TaskItem from './TaskItem';
@@ -17,9 +20,17 @@ import TaskInput from './TaskInput';
 // فقط یک‌بار — همان اولین باری که داده واقعاً بارگذاری شد — تعیین می‌شود؛
 // وگرنه با هر تغییر کارها، وضعیت باز/بسته‌ای که کاربر دستی انتخاب کرده دوباره می‌پرد.
 export default function TaskList({ dayKey, title = 'کارها' }) {
-  const { tasks, addTask, toggleTask, toggleRollover, removeTask, moveTask } = useDayTasks(dayKey);
+  const { tasks, addTask, toggleTask, toggleRollover, removeTask, reorderTasks } = useDayTasks(dayKey);
   const [open, setOpen] = useState(true);
   const autoSet = useRef(false);
+  // distance:8 یعنی یک تپ ساده (چک‌باکس/دکمهٔ سه‌نقطه) با کشیدن اشتباه گرفته نشود.
+  // هر سه حسگر با هم — بعضی مرورگرها/ابزارها فقط یکی از رویدادهای
+  // pointer/mouse/touch را درست شبیه‌سازی می‌کنند.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+  );
 
   useEffect(() => {
     if (autoSet.current || tasks.length === 0) return;
@@ -28,6 +39,14 @@ export default function TaskList({ dayKey, title = 'کارها' }) {
   }, [tasks]);
 
   const doneCount = tasks.filter((t) => t.done).length;
+
+  const handleDragEnd = ({ active, over }) => {
+    if (!over || active.id === over.id) return;
+    const ids = tasks.map((t) => t.id);
+    const oldIndex = ids.indexOf(active.id);
+    const newIndex = ids.indexOf(over.id);
+    reorderTasks(arrayMove(ids, oldIndex, newIndex));
+  };
 
   return (
     <Paper elevation={0} sx={{ overflow: 'hidden' }}>
@@ -52,19 +71,24 @@ export default function TaskList({ dayKey, title = 'کارها' }) {
       <Collapse in={open}>
         <Divider sx={{ borderColor: 'glass.border' }} />
         <Box sx={{ py: 0.5 }}>
-          {tasks.map((task, i) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onToggle={toggleTask}
-              onToggleRollover={toggleRollover}
-              onRemove={removeTask}
-              onMoveUp={(id) => moveTask(id, -1)}
-              onMoveDown={(id) => moveTask(id, 1)}
-              canMoveUp={i > 0}
-              canMoveDown={i < tasks.length - 1}
-            />
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+              {tasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  onToggle={toggleTask}
+                  onToggleRollover={toggleRollover}
+                  onRemove={removeTask}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           <Divider sx={{ borderColor: 'glass.border' }} />
           <TaskInput onAdd={addTask} />
         </Box>

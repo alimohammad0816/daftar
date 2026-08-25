@@ -143,25 +143,26 @@ export function useDayTasks(dayKey) {
     [ydoc, tasksArray],
   );
 
-  const moveTask = useCallback(
-    (id, direction) => {
+  // درگ‌ودراپ (TaskList.js با dnd-kit) کل ترتیب تازه را یک‌جا می‌دهد، نه
+  // یک‌قدم‌یک‌قدم — یک Y.Map حذف‌شده را نمی‌شود دوباره درج کرد (Yjs محتوایش
+  // را تخریب می‌کند)، پس همهٔ کارها را با مقدارهای بیرون‌کشیده‌شان از نو
+  // می‌سازیم، به همان ترتیب تازه.
+  const reorderTasks = useCallback(
+    (orderedIds) => {
       ydoc.transact(() => {
-        const arr = tasksArray.toArray();
-        const idx = arr.findIndex((t) => t.get('id') === id);
-        const target = idx + direction;
-        if (idx === -1 || target < 0 || target >= arr.length) return;
-        // یک Y.Map حذف‌شده را نمی‌شود دوباره درج کرد — Yjs محتوایش را تخریب
-        // می‌کند. برای جابه‌جایی، مقدارها را قبل از حذف بیرون می‌کشیم و یک
-        // Y.Map تازه با همان مقدارها در جای جدید می‌سازیم.
-        const data = toPlainTask(arr[idx]);
-        tasksArray.delete(idx, 1);
-        const fresh = new Y.Map();
-        for (const [key, value] of Object.entries(data)) fresh.set(key, value);
-        tasksArray.insert(target, [fresh]);
+        const byId = new Map(tasksArray.toArray().map((t) => [t.get('id'), toPlainTask(t)]));
+        tasksArray.delete(0, tasksArray.length);
+        const fresh = orderedIds.map((id) => {
+          const data = byId.get(id);
+          const m = new Y.Map();
+          for (const [key, value] of Object.entries(data)) m.set(key, value);
+          return m;
+        });
+        tasksArray.insert(0, fresh);
       });
     },
     [ydoc, tasksArray],
   );
 
-  return { tasks, addTask, toggleTask, toggleRollover, removeTask, moveTask };
+  return { tasks, addTask, toggleTask, toggleRollover, removeTask, reorderTasks };
 }
