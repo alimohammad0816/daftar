@@ -7,6 +7,10 @@ FROM node:20-bookworm-slim AS web-builder
 WORKDIR /app/web
 
 COPY web/package.json web/yarn.lock web/.yarnrc.yml ./
+# روی VPSهای کم‌رم، دانلود+استخراج موازی بسته‌ها در «Fetch step» یارن حافظه
+# را می‌ترکاند (exit 137 = OOM kill). محدودکردن همزمانی این را کند ولی امن
+# می‌کند؛ هزینه‌اش فقط چند ثانیه بیشتر طول کشیدن build است.
+ENV YARN_NETWORK_CONCURRENCY=2
 RUN corepack enable && yarn install --immutable
 
 COPY web/ ./
