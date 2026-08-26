@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Box from '@mui/material/Box';
 import Toolbar from './Toolbar';
 
@@ -35,9 +36,19 @@ function useKeyboardOffset() {
 export default function MobileToolbar({ editor }) {
   const offset = useKeyboardOffset();
 
-  if (!editor) return null;
+  // این کامپوننت فقط بعد از focus شدن ادیتور (تعامل کاربر) رندر می‌شود — بند
+  // بالای Editor.js: `{focused && <MobileToolbar .../>}` — پس هیچ‌وقت وسط
+  // SSR/hydration رندر نمی‌شود و document همیشه موجود است، بدون نیاز به
+  // useEffect جدا برای «mounted».
+  if (!editor || typeof document === 'undefined') return null;
 
-  return (
+  // Paper (theme.js: glassSx) روی هر کارتی backdropFilter می‌گذارد، و
+  // backdrop-filter طبق اسپک CSS برای فرزندهای position:fixed یک containing
+  // block تازه می‌سازد — یعنی اگر این تولبار داخل Paper ادیتور بماند، «فیکس»
+  // بودنش نسبت به همان Paper است نه صفحه، پس با اسکرول صفحه جابه‌جا می‌شود و
+  // روی متن می‌نشیند. با portal مستقیم به body، از هر containing block احتمالی
+  // (Paper همین‌جا، یا هر جای دیگری در آینده) خارج می‌ماند.
+  return createPortal(
     <Box
       sx={{
         display: { xs: 'block', sm: 'none' },
@@ -53,6 +64,7 @@ export default function MobileToolbar({ editor }) {
       }}
     >
       <Toolbar editor={editor} />
-    </Box>
+    </Box>,
+    document.body,
   );
 }
