@@ -9,6 +9,7 @@ import InputBase from '@mui/material/InputBase';
 import IconButton from '@mui/material/IconButton';
 import ButtonBase from '@mui/material/ButtonBase';
 import Divider from '@mui/material/Divider';
+import Chip from '@mui/material/Chip';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import StickyNote2RoundedIcon from '@mui/icons-material/StickyNote2Rounded';
@@ -28,7 +29,7 @@ export default function NotesPage() {
   const filtered = useMemo(() => {
     const q = query.trim();
     if (!q) return notes;
-    return notes.filter((n) => `${n.title} ${n.plain}`.includes(q));
+    return notes.filter((n) => `${n.title} ${n.plain} ${(n.tags ?? []).join(' ')}`.includes(q));
   }, [notes, query]);
 
   const handleCreate = () => {
@@ -85,6 +86,13 @@ export default function NotesPage() {
                       </Typography>
                     )}
                   </Box>
+                  {note.tags?.length > 0 && (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.75 }}>
+                      {note.tags.map((tag) => (
+                        <Chip key={tag} label={tag} size="small" sx={{ height: 22, fontSize: '0.7rem' }} />
+                      ))}
+                    </Box>
+                  )}
                 </ButtonBase>
               </Box>
             );

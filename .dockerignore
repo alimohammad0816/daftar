@@ -1,0 +1,11 @@
+.git
+
+web/node_modules
+web/.next
+web/.yarn
+
+api/.venv
+api/__pycache__
+api/**/__pycache__
+api/.env
+api/data

@@ -14,7 +14,7 @@ const PLAIN_SNIPPET_LENGTH = 200;
 // یک یادداشت وجود دارد، نه دو نوع جدا — هر یادداشت سند مستقل خودش را دارد
 // (`note:{id}`) و اختیاری به یک روز وصل می‌شود (dayKey، بند ۳). حداکثر یک
 // یادداشت می‌تواند به یک روز وصل باشد — connectNoteToDay این را تضمین می‌کند.
-// هر عضو این Y.Map یک Y.Map دیگر است: {id, title, plain, dayKey, updatedAt, deletedAt}.
+// هر عضو این Y.Map یک Y.Map دیگر است: {id, title, plain, dayKey, tags, updatedAt, deletedAt}.
 // حذف طبق قاعدهٔ ۱ در CLAUDE.md فقط علامت‌گذاری (deletedAt) است، نه واقعاً حذف.
 function toPlainEntry(ymap) {
   return {
@@ -22,6 +22,7 @@ function toPlainEntry(ymap) {
     title: ymap.get('title'),
     plain: ymap.get('plain'),
     dayKey: ymap.get('dayKey') ?? null,
+    tags: ymap.get('tags') ?? [],
     updatedAt: ymap.get('updatedAt'),
     deletedAt: ymap.get('deletedAt'),
   };
@@ -75,6 +76,7 @@ export function useNotesIndex() {
       entry.set('title', '');
       entry.set('plain', '');
       entry.set('dayKey', dayKey);
+      entry.set('tags', []);
       entry.set('updatedAt', now);
       entry.set('deletedAt', null);
       ydoc.transact(() => notesMap.set(id, entry));
@@ -89,6 +91,35 @@ export function useNotesIndex() {
         const entry = notesMap.get(id);
         if (!entry) return;
         for (const [key, value] of Object.entries(patch)) entry.set(key, value);
+        entry.set('updatedAt', new Date().toISOString());
+      });
+    },
+    [ydoc, notesMap],
+  );
+
+  const addTag = useCallback(
+    (id, tag) => {
+      const trimmed = tag.trim();
+      if (!trimmed) return;
+      ydoc.transact(() => {
+        const entry = notesMap.get(id);
+        if (!entry) return;
+        const tags = entry.get('tags') ?? [];
+        if (tags.includes(trimmed)) return;
+        entry.set('tags', [...tags, trimmed]);
+        entry.set('updatedAt', new Date().toISOString());
+      });
+    },
+    [ydoc, notesMap],
+  );
+
+  const removeTag = useCallback(
+    (id, tag) => {
+      ydoc.transact(() => {
+        const entry = notesMap.get(id);
+        if (!entry) return;
+        const tags = entry.get('tags') ?? [];
+        entry.set('tags', tags.filter((t) => t !== tag));
         entry.set('updatedAt', new Date().toISOString());
       });
     },
@@ -125,7 +156,9 @@ export function useNotesIndex() {
             .filter(Boolean)
             .join(' ')
             .slice(0, PLAIN_SNIPPET_LENGTH);
+          const mergedTags = [...new Set([...(targetEntry?.get('tags') ?? []), ...(noteEntry?.get('tags') ?? [])])];
           targetEntry?.set('plain', mergedPlain);
+          targetEntry?.set('tags', mergedTags);
           targetEntry?.set('updatedAt', new Date().toISOString());
           noteEntry?.set('deletedAt', new Date().toISOString());
         });
@@ -138,5 +171,5 @@ export function useNotesIndex() {
     [ydoc, notesMap, updateNoteMeta],
   );
 
-  return { notes, createNote, updateNoteMeta, deleteNote, connectNoteToDay };
+  return { notes, createNote, updateNoteMeta, deleteNote, connectNoteToDay, addTag, removeTag };
 }

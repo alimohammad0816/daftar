@@ -12,6 +12,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
+import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import { getYDoc } from '@/lib/ydoc';
 import { useLiveSync } from '@/lib/useLiveSync';
 import { useNotesIndex } from '@/lib/useNotesIndex';
@@ -31,11 +32,19 @@ export default function FreeNotePage() {
   const docId = `note:${noteId}`;
   useLiveSync(docId, getYDoc);
 
-  const { notes, updateNoteMeta, deleteNote, connectNoteToDay } = useNotesIndex();
+  const { notes, updateNoteMeta, deleteNote, connectNoteToDay, addTag, removeTag } = useNotesIndex();
   const entry = notes.find((n) => n.id === noteId);
   const [dayPickerOpen, setDayPickerOpen] = useState(false);
+  const [tagInput, setTagInput] = useState('');
   const editorRef = useRef(null);
   const { handleSave, toastOpen, closeToast } = useManualSave(editorRef);
+
+  const handleTagKeyDown = (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addTag(noteId, tagInput);
+    setTagInput('');
+  };
 
   const handleTextChange = useCallback(
     (text) => {
@@ -97,6 +106,20 @@ export default function FreeNotePage() {
             اختصاص به یک روز
           </Button>
         )}
+      </Box>
+
+      <Box sx={{ px: 0.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.75 }}>
+        <SellRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+        {(entry?.tags ?? []).map((tag) => (
+          <Chip key={tag} label={tag} size="small" onDelete={() => removeTag(noteId, tag)} sx={{ height: 28 }} />
+        ))}
+        <InputBase
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={handleTagKeyDown}
+          placeholder="افزودن تگ…"
+          sx={{ fontSize: '0.8rem', minWidth: 80, flexGrow: 1 }}
+        />
       </Box>
 
       <DayPickerSheet

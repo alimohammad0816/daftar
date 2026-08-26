@@ -1,0 +1,41 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        # زمان build داخل باندل جاوااسکریپت جاسازی می‌شود (NEXT_PUBLIC_*)، پس
+        # همین‌جا باید دامنهٔ واقعی باشد نه localhost. با یک دامنهٔ مشترک برای
+        # وب و API (پشت nginx/notes.angoti.ir.conf)، مرورگر هر دو را
+        # same-origin می‌بیند و اصلاً به CORS نمی‌رسد.
+        NEXT_PUBLIC_API_URL: https://notes.angoti.ir
+    ports:
+      # فقط روی خودِ هاست باز است — nginx (nginx/notes.angoti.ir.conf) TLS را
+      # اینجا ترمینیت می‌کند و پشت‌بندی می‌کند؛ کانتینر مستقیم به اینترنت
+      # اکسپوز نمی‌شود. پورت‌های سمت هاست عمداً رندوم‌اند (نه ۳۰۰۰/۸۰۰۰
+      # پیش‌فرض)، تا با nginx.conf هماهنگ بماند اگر این دو را عوض کردی.
+      - '127.0.0.1:61997:3000' # وب
+      - '127.0.0.1:53554:8000' # API + WebSocket رلهٔ Yjs
+    environment:
+      DAFTAR_TOTP_ENC_KEY: ${DAFTAR_TOTP_ENC_KEY:?کلید رمزنگاری TOTP لازم است — راهنمای پایین فایل را ببین}
+      DAFTAR_COOKIE_SECURE: ${DAFTAR_COOKIE_SECURE:-true}
+      DAFTAR_CORS_ORIGINS: ${DAFTAR_CORS_ORIGINS:-https://notes.angoti.ir}
+    volumes:
+      - daftar-data:/app/api/data
+    restart: unless-stopped
+
+volumes:
+  daftar-data:
+
+# راه‌اندازی روی سرور (notes.angoti.ir):
+#   1. یک‌بار کلید بساز:  python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+#      و در یک فایل .env کنار همین فایل بگذار:  DAFTAR_TOTP_ENC_KEY=...
+#   2. docker compose up -d --build
+#   3. docker compose exec app /app/api/.venv/bin/python /app/api/scripts/create_user.py
+#      (اسکریپت تعاملی است: نام کاربری، رمز عبور، QR راه‌اندازی TOTP، کدهای بازیابی)
+#   4. nginx/notes.angoti.ir.conf را نصب کن (راهنمای کامل بالای همان فایل).
+#
+# برای تست محلی بدون nginx و بدون دامنهٔ واقعی، هنگام build override کن:
+#   docker compose build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000
+#   و DAFTAR_COOKIE_SECURE=false + DAFTAR_CORS_ORIGINS=http://localhost:3000 را در .env بگذار
+#   (روی http کوکی Secure توسط مرورگر رد می‌شود). روی notes.angoti.ir واقعی
+#   COOKIE_SECURE همیشه true بماند — بند ۱۴.۳ در PLAN.md: HTTPS اجباری.
