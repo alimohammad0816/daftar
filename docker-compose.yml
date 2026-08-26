@@ -34,6 +34,9 @@ volumes:
 #      (اسکریپت تعاملی است: نام کاربری، رمز عبور، QR راه‌اندازی TOTP، کدهای بازیابی)
 #   4. nginx/notes.angoti.ir.conf را نصب کن (راهنمای کامل بالای همان فایل).
 #
+# تغییر نام کاربری/رمز/TOTP بعداً:
+#   docker compose exec app /app/api/.venv/bin/python /app/api/scripts/manage_user.py
+#
 # برای تست محلی بدون nginx و بدون دامنهٔ واقعی، هنگام build override کن:
 #   docker compose build --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000
 #   و DAFTAR_COOKIE_SECURE=false + DAFTAR_CORS_ORIGINS=http://localhost:3000 را در .env بگذار
