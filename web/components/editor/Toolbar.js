@@ -22,7 +22,7 @@ import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
 import FullscreenExitRoundedIcon from '@mui/icons-material/FullscreenExitRounded';
 import { insertFileIntoEditor } from '@/lib/insertAttachment';
 
-function ToolbarButton({ active, onClick, label, children }) {
+function ToolbarButton({ active, onClick, label, sx, children }) {
   return (
     <IconButton
       // جلوگیری از blur شدن ادیتور موقع کلیک روی دکمه — وگرنه هم انتخاب متن
@@ -37,6 +37,7 @@ function ToolbarButton({ active, onClick, label, children }) {
         flexShrink: 0,
         color: active ? 'primary.main' : 'text.secondary',
         bgcolor: active ? 'action.selected' : 'transparent',
+        ...sx,
       }}
     >
       {children}
@@ -177,16 +178,21 @@ export default function Toolbar({ editor, fullscreen = false, onToggleFullscreen
       </ToolbarButton>
       {/* فقط وقتی ادیتور واقعاً حالت تمام‌صفحه دارد (Editor.js آن را می‌دهد). */}
       {onToggleFullscreen && (
-        <>
-          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 1 }} />
-          <ToolbarButton
-            label={fullscreen ? 'خروج از تمام‌صفحه' : 'تمام‌صفحه'}
-            active={fullscreen}
-            onClick={onToggleFullscreen}
-          >
-            {fullscreen ? <FullscreenExitRoundedIcon fontSize="small" /> : <FullscreenRoundedIcon fontSize="small" />}
-          </ToolbarButton>
-        </>
+        <ToolbarButton
+          label={fullscreen ? 'خروج از تمام‌صفحه' : 'تمام‌صفحه'}
+          active={fullscreen}
+          onClick={onToggleFullscreen}
+          // چسبیده به لبهٔ چپ نوار، جدا از دکمه‌های قالب‌بندی — این یک عملِ
+          // «قاب» است نه قالب‌بندی متن. در RTL آغاز ردیف سمت راست است، پس
+          // margin-inline-start: auto کل فضای باقی‌مانده را سمت راستِ این دکمه
+          // می‌ریزد و خودش را تا انتهای چپ می‌راند. (خاصیت منطقی عمدی است:
+          // stylis-plugin-rtl فقط فیزیکی‌ها را آینه می‌کند و این را دست نمی‌زند.)
+          // روی گوشی که نوار سرریز و اسکرول‌شدنی می‌شود، auto صفر می‌شود و
+          // دکمه بی‌سروصدا آخرِ صف می‌ماند.
+          sx={{ marginInlineStart: 'auto' }}
+        >
+          {fullscreen ? <FullscreenExitRoundedIcon fontSize="small" /> : <FullscreenRoundedIcon fontSize="small" />}
+        </ToolbarButton>
       )}
       {/* بدون capture — با capture="environment" گوشی مستقیم دوربین را باز
           می‌کند و راهی به گالری نمی‌گذارد. accept="image/*" به‌تنهایی انتخابگر
