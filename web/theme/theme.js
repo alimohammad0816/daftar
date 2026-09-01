@@ -106,6 +106,37 @@ const PALETTES = {
       glassShadow: '0 12px 40px rgba(0,0,0,0.55)',
     },
   },
+  cypress: {
+    label: 'سروی',
+    light: {
+      // سبزِ سرو: تنها خانوادهٔ رنگی‌ای که در سه پالت قبلی نبود، و دورترین
+      // فام از قرمز تعطیلات — پس خانهٔ تعطیل در تقویم بیش از همیشه جدا می‌افتد.
+      accent: '#1F5D4C', // ۷.۱۹:۱
+      accentLight: '#2E7D68',
+      accent2: '#A8842C', // خاکِ اُخرایی — فقط تزئینی (لکه‌های AppBackground)
+      accent2Soft: '#C9A551',
+      bg: '#F5F8F3', // سفیدِ کاهیِ کم‌رنگ، نه سفیدِ خنثی
+      paper: '#FFFFFF',
+      ink: '#12211C', // ۱۵.۵۶:۱
+      muted: '#4E635A', // ۶.۰۲:۱
+      glassBg: 'rgba(255,255,255,0.60)',
+      glassBorder: 'rgba(255,255,255,0.85)',
+      glassShadow: '0 12px 34px rgba(18,45,35,0.10)',
+    },
+    dark: {
+      accent: '#7ACFAE', // ۱۰.۲۴:۱ — یشمِ روشن؛ سبزِ تیره روی زمینهٔ تیره خوانا نیست
+      accentLight: '#A5E5CC',
+      accent2: '#D8B45A',
+      accent2Soft: '#E8CE8C',
+      bg: '#071310',
+      paper: '#0E1C17',
+      ink: '#E8F2EC', // ۱۶.۵۳:۱
+      muted: '#93AEA3', // ۷.۹۵:۱
+      glassBg: 'rgba(14,30,24,0.62)',
+      glassBorder: 'rgba(255,255,255,0.08)',
+      glassShadow: '0 12px 40px rgba(0,0,0,0.55)',
+    },
+  },
 };
 
 export const PALETTE_KEYS = Object.keys(PALETTES);
