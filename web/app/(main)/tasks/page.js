@@ -27,6 +27,12 @@ export default function TasksPage() {
     const d = today();
     return `${formatWeekdayLong(d)}، ${formatDayNumber(d)} ${formatMonthYear(d)}`;
   }, []);
+  // بدون این، صفحهٔ «کارها» تنها صفحه‌ای بود که سند روز جاری را زنده نگه
+  // نمی‌داشت — کارها فقط از IndexedDB محلی می‌آمدند و بین دستگاه‌ها همگام
+  // نمی‌شدند (برخلاف /day/{dayKey} و /notes که هرکدام useLiveSync خودشان را
+  // دارند). DaySyncKeeper پایین فقط روزهای گذشتهٔ کارهای پین‌شده را می‌گیرد،
+  // و todayKey عمداً از آن فهرست بیرون است.
+  useLiveSync(todayKey);
   const rolling = useRollingTasks();
   const rollingFromPast = rolling.filter((t) => t.dayKey !== todayKey);
   const uniqueDayKeys = [...new Set(rollingFromPast.map((t) => t.dayKey))];
