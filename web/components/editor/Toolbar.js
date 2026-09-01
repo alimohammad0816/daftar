@@ -173,14 +173,10 @@ export default function Toolbar({ editor }) {
       <ToolbarButton label="ضمیمه" onClick={() => fileInputRef.current?.click()}>
         <AttachFileRoundedIcon fontSize="small" />
       </ToolbarButton>
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        hidden
-        onChange={handleFilePicked}
-      />
+      {/* بدون capture — با capture="environment" گوشی مستقیم دوربین را باز
+          می‌کند و راهی به گالری نمی‌گذارد. accept="image/*" به‌تنهایی انتخابگر
+          عادی را می‌آورد که خودِ دوربین هم یکی از گزینه‌هایش است. */}
+      <input ref={imageInputRef} type="file" accept="image/*" hidden onChange={handleFilePicked} />
       <input ref={fileInputRef} type="file" hidden onChange={handleFilePicked} />
     </Box>
   );
