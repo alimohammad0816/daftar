@@ -25,12 +25,18 @@ import { formatDayNumber, formatMonthYear } from '@/lib/jalali';
 import { toFa } from '@/lib/toFa';
 import { RADIUS_SM } from '@/theme/theme';
 
-// تاریخ‌های نشست از سرور ISO می‌آیند؛ نمایش‌شان مثل هر تاریخ دیگر اپ شمسی و
-// با اعداد فارسی است. تاریخ نامعتبر ردیف را خراب نکند — فقط پنهان می‌شود.
-function faDate(iso) {
+// تاریخ‌های نشست از سرور با آفست UTC می‌آیند (`+00:00`)، پس new Date آن‌ها را
+// درست می‌خواند و همه‌چیز به وقت محلیِ همین دستگاه نشان داده می‌شود. این فقط
+// خوش‌ظاهری نیست: با اختلاف نیم‌ساعتهٔ تهران، یک زمانِ نزدیک نیمه‌شب حتی روزِ
+// تقویمیِ متفاوتی می‌شود، پس ساعت و تاریخ باید از یک منبع بیایند.
+// تاریخ نامعتبر ردیف را خراب نکند — فقط پنهان می‌شود.
+function faDateTime(iso) {
   if (!iso) return null;
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : `${formatDayNumber(d)} ${formatMonthYear(d)}`;
+  if (Number.isNaN(d.getTime())) return null;
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${formatDayNumber(d)} ${formatMonthYear(d)}، ساعت ${toFa(`${hh}:${mm}`)}`;
 }
 
 // نام مرورگر لاتین است و وسط متن فارسی می‌نشیند — قاعدهٔ «جزیره‌های LTR» در
@@ -222,8 +228,8 @@ export default function LoginPanel() {
             onRevoke={d.id ? () => setPending(d) : undefined}
             caption={
               d.current
-                ? faDate(d.created_at) && `از ${faDate(d.created_at)}`
-                : faDate(d.last_seen_at) && `آخرین فعالیت ${faDate(d.last_seen_at)}`
+                ? faDateTime(d.created_at) && `از ${faDateTime(d.created_at)}`
+                : faDateTime(d.last_seen_at) && `آخرین فعالیت ${faDateTime(d.last_seen_at)}`
             }
           />
         ))}

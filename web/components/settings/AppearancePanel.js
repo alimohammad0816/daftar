@@ -13,7 +13,7 @@ import { PALETTE_KEYS, paletteLabel, paletteSwatch } from '@/theme/theme';
 // منبع اصلی بیاید نه از یک کپیِ دستی، وگرنه با تغییر پالت از هم می‌پاشند.
 function PaletteDots({ paletteKey, mode }) {
   return (
-    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', gap: 0.4, alignItems: 'center', flexShrink: 0 }}>
       {paletteSwatch(paletteKey, mode).map((color) => (
         <Box
           key={color}
@@ -58,33 +58,53 @@ export default function AppearancePanel() {
         </ToggleButtonGroup>
       </Box>
 
+      {/* روی گوشی، انتخابگر کنارِ برچسب جا نمی‌شود و وسطِ کپسول می‌شکند —
+          زشت و ناخوانا. پس آنجا برچسب یک سطر می‌شود و انتخابگر سطرِ کاملِ
+          بعدی، با دکمه‌های هم‌عرض. روی دسکتاپ همان کنارِ هم قبلی می‌ماند. */}
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' },
           justifyContent: 'space-between',
           gap: 1,
-          flexWrap: 'wrap',
         }}
       >
-        <Typography>پالت رنگی</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
+          <Typography>پالت رنگی</Typography>
+          {/* روی گوشی نامِ پالت‌ها در دکمه‌ها جا نمی‌شود (هر دکمه ۷۴ پیکسل است
+              و «فیروزه‌ای» ۵۰ می‌خواهد، بدون احتساب نقطه‌ها) — پس آنجا دکمه‌ها
+              فقط نمونه‌رنگ‌اند و نامِ پالتِ *انتخاب‌شده* اینجا می‌آید. */}
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: { xs: 'inline', sm: 'none' } }}
+          >
+            {paletteLabel(palette)}
+          </Typography>
+        </Box>
         <ToggleButtonGroup
           value={palette}
           exclusive
           onChange={(_e, next) => next && setPalette(next)}
           size="small"
-          // با سه پالت به بالا، روی گوشی در یک خط جا نمی‌شوند.
-          sx={{ flexWrap: 'wrap' }}
+          sx={{
+            width: { xs: '100%', sm: 'auto' },
+            // سهم مساوی از سطر روی گوشی؛ روی دسکتاپ هرکدام اندازهٔ متن خودش.
+            '& .MuiToggleButton-root': { flex: { xs: 1, sm: 'none' }, minWidth: 0 },
+          }}
         >
           {PALETTE_KEYS.map((key) => (
             <ToggleButton
               key={key}
               value={key}
               aria-label={`پالت ${paletteLabel(key)}`}
-              sx={{ minHeight: 44, gap: 0.75, px: 1.5, textTransform: 'none' }}
+              sx={{ minHeight: 44, gap: 0.75, px: { xs: 0.5, sm: 1.5 }, textTransform: 'none' }}
             >
               <PaletteDots paletteKey={key} mode={mode} />
-              <Typography variant="body2">{paletteLabel(key)}</Typography>
+              <Typography variant="body2" noWrap sx={{ display: { xs: 'none', sm: 'block' } }}>
+                {paletteLabel(key)}
+              </Typography>
             </ToggleButton>
           ))}
         </ToggleButtonGroup>
