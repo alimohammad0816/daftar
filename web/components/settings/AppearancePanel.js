@@ -73,6 +73,8 @@ export default function AppearancePanel() {
           exclusive
           onChange={(_e, next) => next && setPalette(next)}
           size="small"
+          // با سه پالت به بالا، روی گوشی در یک خط جا نمی‌شوند.
+          sx={{ flexWrap: 'wrap' }}
         >
           {PALETTE_KEYS.map((key) => (
             <ToggleButton
