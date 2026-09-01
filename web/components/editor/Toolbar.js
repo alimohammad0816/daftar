@@ -18,6 +18,8 @@ import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import CodeRoundedIcon from '@mui/icons-material/CodeRounded';
 import GridOnRoundedIcon from '@mui/icons-material/GridOnRounded';
+import FullscreenRoundedIcon from '@mui/icons-material/FullscreenRounded';
+import FullscreenExitRoundedIcon from '@mui/icons-material/FullscreenExitRounded';
 import { insertFileIntoEditor } from '@/lib/insertAttachment';
 
 function ToolbarButton({ active, onClick, label, children }) {
@@ -66,7 +68,7 @@ function useToolbarState(editor) {
   });
 }
 
-export default function Toolbar({ editor }) {
+export default function Toolbar({ editor, fullscreen = false, onToggleFullscreen }) {
   const state = useToolbarState(editor);
   const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -173,6 +175,19 @@ export default function Toolbar({ editor }) {
       <ToolbarButton label="ضمیمه" onClick={() => fileInputRef.current?.click()}>
         <AttachFileRoundedIcon fontSize="small" />
       </ToolbarButton>
+      {/* فقط وقتی ادیتور واقعاً حالت تمام‌صفحه دارد (Editor.js آن را می‌دهد). */}
+      {onToggleFullscreen && (
+        <>
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 1 }} />
+          <ToolbarButton
+            label={fullscreen ? 'خروج از تمام‌صفحه' : 'تمام‌صفحه'}
+            active={fullscreen}
+            onClick={onToggleFullscreen}
+          >
+            {fullscreen ? <FullscreenExitRoundedIcon fontSize="small" /> : <FullscreenRoundedIcon fontSize="small" />}
+          </ToolbarButton>
+        </>
+      )}
       {/* بدون capture — با capture="environment" گوشی مستقیم دوربین را باز
           می‌کند و راهی به گالری نمی‌گذارد. accept="image/*" به‌تنهایی انتخابگر
           عادی را می‌آورد که خودِ دوربین هم یکی از گزینه‌هایش است. */}

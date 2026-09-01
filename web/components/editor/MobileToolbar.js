@@ -33,7 +33,7 @@ function useKeyboardOffset() {
   return offset;
 }
 
-export default function MobileToolbar({ editor }) {
+export default function MobileToolbar({ editor, fullscreen, onToggleFullscreen }) {
   const offset = useKeyboardOffset();
 
   // این کامپوننت فقط بعد از focus شدن ادیتور (تعامل کاربر) رندر می‌شود — بند
@@ -55,7 +55,9 @@ export default function MobileToolbar({ editor }) {
         position: 'fixed',
         insetInline: 0,
         bottom: offset,
-        zIndex: (theme) => theme.zIndex.appBar + 1,
+        // بالاتر از پوستهٔ تمام‌صفحهٔ ادیتور (appBar + 1) بنشیند، وگرنه در آن
+        // حالت پشتش گم می‌شود. هنوز زیر BottomSheet جدول (drawer) می‌ماند.
+        zIndex: (theme) => theme.zIndex.appBar + 2,
         bgcolor: 'glass.bg',
         backdropFilter: 'blur(24px) saturate(180%)',
         WebkitBackdropFilter: 'blur(24px) saturate(180%)',
@@ -63,7 +65,7 @@ export default function MobileToolbar({ editor }) {
         borderColor: 'glass.border',
       }}
     >
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} fullscreen={fullscreen} onToggleFullscreen={onToggleFullscreen} />
     </Box>,
     document.body,
   );

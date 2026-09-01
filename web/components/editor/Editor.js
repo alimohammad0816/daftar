@@ -3,6 +3,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import Paper from '@mui/material/Paper';
+import IconButton from '@mui/material/IconButton';
+import FullscreenExitRoundedIcon from '@mui/icons-material/FullscreenExitRounded';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -35,6 +37,7 @@ const Editor = forwardRef(function Editor(
 ) {
   const { ydoc } = getDoc(docId);
   const [focused, setFocused] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const { setFocused: setGlobalFocused } = useEditorFocus();
   const textChangeTimer = useRef(null);
 
@@ -87,6 +90,24 @@ const Editor = forwardRef(function Editor(
     [onTextChange, editor],
   );
 
+  // تمام‌صفحه: Escape برای خروج، و قفل اسکرول سند پشت سر — وگرنه چرخ ماوس
+  // روی ادیتورِ رسیده‌به‌ته، صفحهٔ زیرین را می‌لغزاند (و روی موبایل نوار
+  // ناوبری مرورگر مدام باز و بسته می‌شود). مقدار قبلی overflow برگردانده
+  // می‌شود، نه پاک — ممکن است جای دیگری آن را ست کرده باشد.
+  useEffect(() => {
+    if (!fullscreen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setFullscreen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [fullscreen]);
+
   // با تعویض سند، key=docId این کامپوننت را می‌سازد و از نو می‌سازد بدون آنکه
   // onBlur ادیتور قبلی فرصت اجرا پیدا کند — بدون این پاک‌سازی، IslandNav
   // می‌تواند برای همیشه پنهان بماند.
@@ -96,9 +117,49 @@ const Editor = forwardRef(function Editor(
   if (!editor) return null;
 
   return (
-    <Paper elevation={0} sx={{ overflow: 'hidden' }}>
+    <Paper
+      elevation={0}
+      sx={{
+        overflow: 'hidden',
+        // تمام‌صفحه: کل قاب از جریان صفحه بیرون می‌رود و روی همه‌چیز می‌نشیند.
+        // appBar + 1 یعنی بالای IslandNav (appBar) ولی زیر MobileToolbar
+        // (appBar + 2) و زیر BottomSheet جدول — هر دو باید روی ادیتور بمانند.
+        ...(fullscreen && {
+          position: 'fixed',
+          inset: 0,
+          zIndex: (theme) => theme.zIndex.appBar + 1,
+          borderRadius: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }),
+      }}
+    >
+      {/* روی گوشی تولبار بالا پنهان است و تولبار پایین فقط با فوکوس می‌آید —
+          پس در تمام‌صفحه بدون این دکمه هیچ راه خروجی نمی‌ماند (نه Escape هست
+          نه تولبار). یک ردیف واقعی است نه دکمهٔ شناور، تا روی خط اول متن نیفتد. */}
+      {fullscreen && (
+        <Box
+          sx={{
+            display: { xs: 'flex', sm: 'none' },
+            justifyContent: 'flex-start',
+            borderBottom: '1px solid',
+            borderColor: 'glass.border',
+            px: 0.5,
+          }}
+        >
+          <IconButton
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setFullscreen(false)}
+            aria-label="خروج از تمام‌صفحه"
+            sx={{ width: 44, height: 44, color: 'text.secondary' }}
+          >
+            <FullscreenExitRoundedIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )}
+
       <Box sx={{ display: { xs: 'none', sm: 'block' }, borderBottom: '1px solid', borderColor: 'glass.border' }}>
-        <Toolbar editor={editor} />
+        <Toolbar editor={editor} fullscreen={fullscreen} onToggleFullscreen={() => setFullscreen((v) => !v)} />
       </Box>
 
       <Box
@@ -106,8 +167,14 @@ const Editor = forwardRef(function Editor(
           px: { xs: 1.5, sm: 2 },
           pb: { xs: focused ? 8 : 1.5, sm: 1.5 },
           pt: 1,
+          // در تمام‌صفحه، *این* ناحیه اسکرول می‌شود نه سند پشت سر. minHeight: 0
+          // برای اینکه یک فرزند flex بتواند از والدش کوتاه‌تر شود و واقعاً
+          // اسکرول بگیرد (وگرنه با محتوای بلند کش می‌آید و سرریز می‌کند).
+          ...(fullscreen && { flexGrow: 1, minHeight: 0, overflowY: 'auto' }),
           '& .ProseMirror': {
-            minHeight: 160,
+            // تمام‌صفحه یعنی تمام عرض — عمداً هیچ سقف عرض/وسط‌چینی اینجا نیست
+            // (درخواست صریح کاربر). حاشیه فقط همان px والد است.
+            minHeight: fullscreen ? '100%' : 160,
             outline: 'none',
             fontSize: '0.95rem',
             lineHeight: 1.9,
@@ -175,7 +242,13 @@ const Editor = forwardRef(function Editor(
         <EditorContent editor={editor} />
       </Box>
 
-      {focused && <MobileToolbar editor={editor} />}
+      {focused && (
+        <MobileToolbar
+          editor={editor}
+          fullscreen={fullscreen}
+          onToggleFullscreen={() => setFullscreen((v) => !v)}
+        />
+      )}
       <TableControls editor={editor} />
     </Paper>
   );
