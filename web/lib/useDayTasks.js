@@ -118,6 +118,25 @@ export function useDayTasks(dayKey) {
 
   const toggleTask = useCallback((id) => toggleDayTask(dayKey, id), [dayKey]);
 
+  // تغییر عنوان یک کار — همان Y.Map سرِ جایش به‌روز می‌شود (نه حذف و درج
+  // دوباره) تا ترتیب و شناسه دست‌نخورده بماند و همگام‌سازی تنها همان یک فیلد
+  // را بفرستد. اگر کار پین باشد، عنوانِ کشِ rollingTasks هم باید هم‌قدم شود.
+  const renameTask = useCallback(
+    (id, title) => {
+      const trimmed = title.trim();
+      if (!trimmed) return;
+      ydoc.transact(() => {
+        const idx = tasksArray.toArray().findIndex((t) => t.get('id') === id);
+        if (idx === -1) return;
+        const task = tasksArray.get(idx);
+        if (task.get('title') === trimmed) return;
+        task.set('title', trimmed);
+        syncRollingEntry(dayKey, task);
+      });
+    },
+    [ydoc, tasksArray, dayKey],
+  );
+
   const toggleRollover = useCallback(
     (id) => {
       ydoc.transact(() => {
@@ -164,5 +183,5 @@ export function useDayTasks(dayKey) {
     [ydoc, tasksArray],
   );
 
-  return { tasks, addTask, toggleTask, toggleRollover, removeTask, reorderTasks };
+  return { tasks, addTask, toggleTask, renameTask, toggleRollover, removeTask, reorderTasks };
 }

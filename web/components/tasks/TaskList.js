@@ -20,7 +20,7 @@ import TaskInput from './TaskInput';
 // فقط یک‌بار — همان اولین باری که داده واقعاً بارگذاری شد — تعیین می‌شود؛
 // وگرنه با هر تغییر کارها، وضعیت باز/بسته‌ای که کاربر دستی انتخاب کرده دوباره می‌پرد.
 export default function TaskList({ dayKey, title = 'کارها' }) {
-  const { tasks, addTask, toggleTask, toggleRollover, removeTask, reorderTasks } = useDayTasks(dayKey);
+  const { tasks, addTask, toggleTask, renameTask, toggleRollover, removeTask, reorderTasks } = useDayTasks(dayKey);
   const [open, setOpen] = useState(true);
   const autoSet = useRef(false);
   // distance:8 یعنی یک تپ ساده (چک‌باکس/دکمهٔ سه‌نقطه) با کشیدن اشتباه گرفته نشود.
@@ -83,6 +83,7 @@ export default function TaskList({ dayKey, title = 'کارها' }) {
                   key={task.id}
                   task={task}
                   onToggle={toggleTask}
+                  onRename={renameTask}
                   onToggleRollover={toggleRollover}
                   onRemove={removeTask}
                 />
