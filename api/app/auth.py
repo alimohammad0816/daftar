@@ -36,10 +36,11 @@ def _create_session(conn: sqlite3.Connection, device_label: str | None) -> str:
     now = datetime.now(UTC)
     expires = now + timedelta(days=config.SESSION_TTL_DAYS)
     conn.execute(
-        "INSERT INTO session (token_hash, device_label, created_at, last_seen_at, expires_at) "
-        "VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO session (token_hash, id, device_label, created_at, last_seen_at, expires_at) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
         (
             security.hash_session_token(token),
+            security.generate_session_id(),
             device_label,
             now.isoformat(),
             now.isoformat(),
@@ -242,7 +243,7 @@ def sessions(session: sqlite3.Row = Depends(get_current_session)):
     conn = get_connection()
     try:
         rows = conn.execute(
-            "SELECT token_hash, device_label, created_at, last_seen_at, expires_at "
+            "SELECT token_hash, id, device_label, created_at, last_seen_at, expires_at "
             "FROM session ORDER BY last_seen_at DESC"
         ).fetchall()
     finally:
@@ -255,6 +256,7 @@ def sessions(session: sqlite3.Row = Depends(get_current_session)):
     now = datetime.now(UTC)
     return [
         {
+            "id": row["id"],
             "device_label": row["device_label"],
             "created_at": row["created_at"],
             "last_seen_at": row["last_seen_at"],
@@ -264,6 +266,30 @@ def sessions(session: sqlite3.Row = Depends(get_current_session)):
         for row in rows
         if datetime.fromisoformat(row["expires_at"]) > now
     ]
+
+
+@router.delete("/sessions/{session_id}")
+def revoke_session(session_id: str, session: sqlite3.Row = Depends(get_current_session)):
+    """بستن نشست یک دستگاه دیگر — «خروج از این دستگاه» در تنظیمات.
+
+    نشست جاری از این مسیر بسته نمی‌شود: کوکی همین درخواست آن‌وقت به یک نشستِ
+    نبوده اشاره می‌کرد و کلاینت در وضعیت نیمه‌واردشده می‌ماند. برای خودِ این
+    دستگاه /auth/logout هست که کوکی را هم پاک می‌کند.
+    """
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT token_hash FROM session WHERE id = ?", (session_id,)
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="این نشست وجود ندارد")
+        if row["token_hash"] == session["token_hash"]:
+            raise HTTPException(status_code=400, detail="برای خروج از همین دستگاه از دکمهٔ خروج استفاده کن")
+        conn.execute("DELETE FROM session WHERE id = ?", (session_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
 
 
 @router.get("/me")

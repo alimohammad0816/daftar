@@ -10,9 +10,16 @@ import { alpha } from '@mui/material/styles';
 import SmartphoneRoundedIcon from '@mui/icons-material/SmartphoneRounded';
 import ComputerRoundedIcon from '@mui/icons-material/ComputerRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
+import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useSession } from '@/lib/SessionContext';
-import { listSessions } from '@/lib/api';
+import { listSessions, revokeSession } from '@/lib/api';
 import { describeDevice } from '@/lib/describeDevice';
 import { formatDayNumber, formatMonthYear } from '@/lib/jalali';
 import { toFa } from '@/lib/toFa';
@@ -32,7 +39,14 @@ function Latin({ children }) {
   return <Box component="span" sx={{ unicodeBidi: 'isolate' }}>{children}</Box>;
 }
 
-function DeviceRow({ label, caption, current }) {
+// همان عنوانی که در ردیف دیده می‌شود، ولی به‌صورت رشته — برای متن دیالوگ.
+function deviceTitle(label) {
+  const { browser, os, raw, unknown } = describeDevice(label);
+  if (unknown) return raw || 'ناشناس';
+  return [browser || 'مرورگر ناشناس', os ? `روی ${os}` : null].filter(Boolean).join(' ');
+}
+
+function DeviceRow({ label, caption, current, onRevoke }) {
   const { browser, os, kind, raw, unknown } = describeDevice(label);
   const Icon = kind === 'mobile' ? SmartphoneRoundedIcon : ComputerRoundedIcon;
 
@@ -89,8 +103,20 @@ function DeviceRow({ label, caption, current }) {
         )}
       </Box>
 
-      {current && (
+      {current ? (
         <Chip label="این دستگاه" size="small" color="primary" variant="outlined" sx={{ flexShrink: 0 }} />
+      ) : (
+        onRevoke && (
+          <Tooltip title="خروج از این دستگاه">
+            <IconButton
+              onClick={onRevoke}
+              aria-label="خروج از این دستگاه"
+              sx={{ width: 44, height: 44, flexShrink: 0, color: 'text.secondary' }}
+            >
+              <LogoutRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )
       )}
     </Box>
   );
@@ -107,6 +133,12 @@ export default function LoginPanel() {
   // null = هنوز نیامده. اگر درخواست شکست بخورد، به همان نشستِ جاریِ کانتکست
   // برمی‌گردیم؛ پنل نباید به‌خاطر یک خطای شبکه خالی بماند.
   const [devices, setDevices] = useState(null);
+  // دستگاهی که منتظر تأیید کاربر برای بسته‌شدن است.
+  const [pending, setPending] = useState(null);
+  const [revoking, setRevoking] = useState(false);
+  const [error, setError] = useState(null);
+
+  const refresh = () => listSessions().then(setDevices).catch(() => setDevices([]));
 
   useEffect(() => {
     let cancelled = false;
@@ -128,6 +160,23 @@ export default function LoginPanel() {
       await logout();
     } finally {
       setBusy(false);
+    }
+  };
+
+  // بستن نشستِ یک دستگاه دیگر برگشت‌پذیر نیست (آن دستگاه باید دوباره وارد
+  // شود) و ممکن است همان لحظه دستِ کسی باشد — پس تأیید می‌گیرد.
+  const confirmRevoke = async () => {
+    if (!pending?.id) return;
+    setRevoking(true);
+    setError(null);
+    try {
+      await revokeSession(pending.id);
+      await refresh();
+      setPending(null);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRevoking(false);
     }
   };
 
@@ -165,11 +214,12 @@ export default function LoginPanel() {
 
         {rows.map((d, i) => (
           <DeviceRow
-            // نشست شناسهٔ عمومی ندارد (عمداً: token_hash بیرون نمی‌رود)، پس
-            // کلید از همان چیزی ساخته می‌شود که ردیف را یکتا می‌کند.
-            key={`${d.created_at || 'unknown'}-${i}`}
+            // نشست شناسهٔ عمومی دارد؛ برای ردیفِ جایگزینِ آفلاین (که شناسه
+            // ندارد) به ترتیب برمی‌گردیم.
+            key={d.id || `fallback-${i}`}
             label={d.device_label}
             current={d.current}
+            onRevoke={d.id ? () => setPending(d) : undefined}
             caption={
               d.current
                 ? faDate(d.created_at) && `از ${faDate(d.created_at)}`
@@ -189,6 +239,28 @@ export default function LoginPanel() {
       >
         خروج
       </Button>
+
+      <Dialog open={!!pending} onClose={() => !revoking && setPending(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: '1rem', fontWeight: 700 }}>خروج از این دستگاه؟</DialogTitle>
+        <DialogContent>
+          <DialogContentText variant="body2">
+            نشست «{deviceTitle(pending?.device_label)}» بسته می‌شود و آن دستگاه برای ادامه باید دوباره وارد شود.
+          </DialogContentText>
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPending(null)} disabled={revoking} sx={{ minHeight: 44 }}>
+            انصراف
+          </Button>
+          <Button onClick={confirmRevoke} color="error" disabled={revoking} sx={{ minHeight: 44 }}>
+            خروج
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

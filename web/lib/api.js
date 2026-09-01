@@ -40,3 +40,8 @@ export function me() {
 export function listSessions() {
   return request('/auth/sessions');
 }
+
+// بستن نشست یک دستگاه دیگر. برای خودِ این دستگاه logout() است، نه این.
+export function revokeSession(id) {
+  return request(`/auth/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}

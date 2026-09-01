@@ -96,6 +96,15 @@ def hash_session_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+def generate_session_id() -> str:
+    """شناسهٔ عمومی نشست — چیزی که کلاینت برای «خروج از این دستگاه» می‌فرستد.
+
+    عمداً از token_hash مشتق نمی‌شود: آن مقدار از خودِ توکن نشست ساخته شده و
+    نباید هیچ‌وقت از سرور بیرون برود. این فقط یک برچسب تصادفیِ بی‌معناست.
+    """
+    return secrets.token_hex(16)
+
+
 def _pending_secret() -> bytes:
     return hashlib.sha256((config.TOTP_ENC_KEY or "unset").encode() + b":pending").digest()
 
