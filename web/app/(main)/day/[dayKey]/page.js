@@ -85,7 +85,9 @@ export default function DayPage() {
       sx={{
         touchAction: 'pan-y',
         width: '100%',
-        maxWidth: 720,
+        // روی دسکتاپ کارها و ادیتور کنار هم می‌نشینند (پایین‌تر)، پس قاب هم
+        // باید پهن‌تر شود؛ روی موبایل همان ۷۲۰ی قبل، تک‌ستونی.
+        maxWidth: { xs: 720, md: 1100 },
         mx: 'auto',
         display: 'flex',
         flexDirection: 'column',
@@ -123,27 +125,42 @@ export default function DayPage() {
         )}
       </Box>
 
-      <TaskList key={dayKey} dayKey={dayKey} />
+      {/* موبایل مرجع است: کارها بالا، یادداشت زیرش. از md به بالا همان دو
+          بلوک نصف‌نصف کنار هم می‌آیند — alignItems: flex-start تا کارتِ کوتاهِ
+          کارها به قد ادیتور کش نیاید. minWidth: 0 هم لازم است وگرنه محتوای
+          پهن (جدول، بلوک کد) ستون flex را از عرض ۵۰٪ بیرون می‌زند. */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: 'flex-start',
+          gap: 2,
+        }}
+      >
+        <Box sx={{ width: '100%', minWidth: 0, flex: { md: '1 1 0' } }}>
+          <TaskList key={dayKey} dayKey={dayKey} />
+        </Box>
 
-      {note ? (
-        <Box sx={{ flexGrow: 1 }}>
-          <Editor key={noteDocId} ref={editorRef} docId={noteDocId} getDoc={getYDoc} onTextChange={handleTextChange} />
+        <Box sx={{ width: '100%', minWidth: 0, flex: { md: '1 1 0' } }}>
+          {note ? (
+            <Editor key={noteDocId} ref={editorRef} docId={noteDocId} getDoc={getYDoc} onTextChange={handleTextChange} />
+          ) : (
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', px: 0.5 }}>
+              <Button size="small" startIcon={<NoteAddRoundedIcon />} onClick={handleCreateNote} variant="outlined">
+                یادداشت تازه
+              </Button>
+              <Button
+                size="small"
+                startIcon={<LinkRoundedIcon />}
+                onClick={() => setNotePickerOpen(true)}
+                sx={{ color: 'text.secondary' }}
+              >
+                وصل‌کردن یادداشت موجود
+              </Button>
+            </Box>
+          )}
         </Box>
-      ) : (
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', px: 0.5 }}>
-          <Button size="small" startIcon={<NoteAddRoundedIcon />} onClick={handleCreateNote} variant="outlined">
-            یادداشت تازه
-          </Button>
-          <Button
-            size="small"
-            startIcon={<LinkRoundedIcon />}
-            onClick={() => setNotePickerOpen(true)}
-            sx={{ color: 'text.secondary' }}
-          >
-            وصل‌کردن یادداشت موجود
-          </Button>
-        </Box>
-      )}
+      </Box>
 
       <NotePickerSheet
         open={notePickerOpen}
