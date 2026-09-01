@@ -6,14 +6,17 @@ import rtlPlugin from 'stylis-plugin-rtl';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { getTheme } from './theme';
+import { getTheme, DEFAULT_PALETTE, PALETTE_KEYS } from './theme';
 
 const STORAGE_KEY = 'daftar-color-mode';
+const PALETTE_KEY = 'daftar-palette';
 const CHANGE_EVENT = 'daftar-color-mode-change';
 
 export const ColorModeContext = React.createContext({
   mode: 'light',
   toggleColorMode: () => {},
+  palette: DEFAULT_PALETTE,
+  setPalette: () => {},
 });
 
 export function useColorMode() {
@@ -44,8 +47,21 @@ function getServerSnapshot() {
   return 'light';
 }
 
+// پالت برخلاف حالت روشن/تیره معادل سیستمی ندارد؛ اگر چیزی ذخیره نشده باشد
+// همان پیش‌فرض پروژه است. هر دو getSnapshot رشته برمی‌گردانند نه شیء — یعنی
+// useSyncExternalStore خودش تشخیص تغییر می‌دهد و نیازی به کش نیست.
+function getPaletteSnapshot() {
+  const stored = window.localStorage.getItem(PALETTE_KEY);
+  return PALETTE_KEYS.includes(stored) ? stored : DEFAULT_PALETTE;
+}
+
+function getPaletteServerSnapshot() {
+  return DEFAULT_PALETTE;
+}
+
 export default function ThemeRegistry({ children }) {
   const mode = React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const palette = React.useSyncExternalStore(subscribe, getPaletteSnapshot, getPaletteServerSnapshot);
 
   const colorMode = React.useMemo(
     () => ({
@@ -55,11 +71,17 @@ export default function ThemeRegistry({ children }) {
         window.localStorage.setItem(STORAGE_KEY, next);
         window.dispatchEvent(new Event(CHANGE_EVENT));
       },
+      palette,
+      setPalette: (next) => {
+        if (!PALETTE_KEYS.includes(next)) return;
+        window.localStorage.setItem(PALETTE_KEY, next);
+        window.dispatchEvent(new Event(CHANGE_EVENT));
+      },
     }),
-    [mode],
+    [mode, palette],
   );
 
-  const theme = React.useMemo(() => getTheme(mode), [mode]);
+  const theme = React.useMemo(() => getTheme(mode, palette), [mode, palette]);
 
   return (
     <AppRouterCacheProvider options={{ key: 'muirtl', stylisPlugins: [prefixer, rtlPlugin] }}>
