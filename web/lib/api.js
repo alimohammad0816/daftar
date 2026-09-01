@@ -35,3 +35,8 @@ export function logout() {
 export function me() {
   return request('/auth/me');
 }
+
+// دستگاه‌های وارد شده — همهٔ نشست‌های زنده، با پرچم `current` برای همین دستگاه.
+export function listSessions() {
+  return request('/auth/sessions');
+}

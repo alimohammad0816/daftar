@@ -231,6 +231,41 @@ def logout(request: Request, response: Response):
     return {"ok": True}
 
 
+@router.get("/sessions")
+def sessions(session: sqlite3.Row = Depends(get_current_session)):
+    """همهٔ نشست‌های زندهٔ کاربر — «دستگاه‌های وارد شده» در تنظیمات.
+
+    اپ تک‌کاربره است (بند ۱۴)، پس هر نشستِ جدول متعلق به همین کاربر است و
+    فیلتر دیگری لازم نیست. `token_hash` هرگز بیرون نمی‌رود: تشخیص «این
+    دستگاه» همین‌جا با مقایسهٔ ردیفِ نشست جاری انجام می‌شود، نه سمت کلاینت.
+    """
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT token_hash, device_label, created_at, last_seen_at, expires_at "
+            "FROM session ORDER BY last_seen_at DESC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    # نشست منقضی را lookup_session فقط وقتی پاک می‌کند که با همان توکن سر بزنند؛
+    # پس ممکن است ردیف‌های مرده در جدول مانده باشند — اینجا فیلتر می‌شوند.
+    # مقایسه با datetime انجام می‌شود نه رشته، چون فرمت ISO با آفست‌های متفاوت
+    # مرتب‌سازی رشته‌ای درستی نمی‌دهد.
+    now = datetime.now(UTC)
+    return [
+        {
+            "device_label": row["device_label"],
+            "created_at": row["created_at"],
+            "last_seen_at": row["last_seen_at"],
+            "expires_at": row["expires_at"],
+            "current": row["token_hash"] == session["token_hash"],
+        }
+        for row in rows
+        if datetime.fromisoformat(row["expires_at"]) > now
+    ]
+
+
 @router.get("/me")
 def me(session: sqlite3.Row = Depends(get_current_session)):
     conn = get_connection()
